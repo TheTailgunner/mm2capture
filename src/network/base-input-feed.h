@@ -13,7 +13,8 @@ namespace MM2Capture {
 class BaseInputFeed: public QEnableSharedFromThis<BaseInputFeed> {
 public:
     using Ptr = QSharedPointer<BaseInputFeed>;
-    BaseInputFeed() =default;
+    BaseInputFeed(): m_isRunning{false} {
+    }
 
     inline void start() {
         if (m_isRunning)
@@ -52,7 +53,8 @@ class BaseInputSession: public QObject {
     Q_OBJECT
 public:
     using Ptr = QSharedPointer<BaseInputSession>;
-    BaseInputSession() =default;
+    BaseInputSession(): m_isRunning{false} {
+    }
     BaseInputSession(const BaseInputFeed::Ptr&);
     void start();
     void stop();

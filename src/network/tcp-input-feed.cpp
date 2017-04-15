@@ -21,8 +21,10 @@ TcpClientInputFeed::operator ==(const TcpClientInputFeed &rhs) {
 
 TcpClientInputFeed&
 TcpClientInputFeed::operator =(const TcpClientInputFeed &rhs) {
-    TcpClientInputFeed tmp{rhs};
-    qSwap(*this, tmp);
+    if (!(*this == rhs)) {
+        TcpClientInputFeed tmp{rhs};
+        qSwap(*this, tmp);
+    }
     return *this;
 }
 

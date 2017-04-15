@@ -8,6 +8,7 @@ BaseInputSession::BaseInputSession(const BaseInputFeed::Ptr& pInput):
 
 void
 BaseInputSession::start() {
+    //TODO openSession in databse
 }
 
 void
@@ -15,4 +16,5 @@ BaseInputSession::stop() {
     if (m_pInput != nullptr)
         m_pInput->stop();
     m_isRunning = false;
+    // TODO closeSession in database
 }
