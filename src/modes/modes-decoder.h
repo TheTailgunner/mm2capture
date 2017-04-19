@@ -2,6 +2,7 @@
 #define _MODES_DECODER_H
 #include <QScopedPointer>
 #include <QScopedArrayPointer>
+#include <QVector>
 
 #include "modes-data.h"
 
@@ -14,7 +15,7 @@ public:
     DecoderBackendBeast(): m_nPayload{0}, m_state{BeastDecoderState::FindEsc},
         m_buffer{new char[BUFFER_LENGTH_BYTES]} {
     }
-    unsigned tryDecode(const QByteArray &, ModesData &);
+    unsigned tryDecode(const QByteArray &, QVector<ModesData> &outMessages);
 private:
     enum class BeastDecoderState {
         FindEsc,
@@ -39,7 +40,7 @@ public:
     ModesDecoder(): m_type{ModesData::MessageType::None},
         m_pBeastDecoder{new DecoderBackendBeast()} {
     }
-    unsigned tryDecode(const QByteArray &, ModesData &outMsg);
+    unsigned tryDecode(const QByteArray &, QVector<ModesData> &outMsgs);
 private:
     ModesData::MessageType m_type;
     QScopedPointer<DecoderBackendBeast> m_pBeastDecoder;

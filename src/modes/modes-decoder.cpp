@@ -18,12 +18,12 @@ DecoderBackendBeast::getFrameLength(char byte) {
 }
 
 unsigned
-DecoderBackendBeast::tryDecode(const QByteArray &data, ModesData &outMessage) {
+DecoderBackendBeast::tryDecode(const QByteArray &data, QVector<ModesData> &outMessages) {
     Q_ASSERT((data.size() - 1) < BUFFER_LENGTH_BYTES);
-    unsigned messagesCount = 0;
     const char* pData = data.constData();
     int size = data.size();
     int nByte = 0;
+    unsigned messagesCount = 0;
     while (nByte < size){
         char byte = pData[nByte];
         switch (m_state) {
@@ -54,8 +54,10 @@ DecoderBackendBeast::tryDecode(const QByteArray &data, ModesData &outMessage) {
                 m_buffer[m_nPayload] = byte;
                 ++m_nPayload;
                 if (m_nPayload == m_frameLength) {
+                    ModesData outMessage;
                     outMessage.loadMessage(ModesData::MessageType::Beast,
                                            QByteArray(m_buffer.data(), m_frameLength));
+                    outMessages.push_back(outMessage);
                     ++messagesCount;
                     m_state = BeastDecoderState::FindEsc;
                 }
@@ -72,8 +74,10 @@ DecoderBackendBeast::tryDecode(const QByteArray &data, ModesData &outMessage) {
                 m_buffer[m_nPayload] = byte;
                 ++m_nPayload;
                 if (m_nPayload == m_frameLength) {
+                    ModesData outMessage;
                     outMessage.loadMessage(ModesData::MessageType::Beast,
                                            QByteArray(m_buffer.data(), m_frameLength));
+                    outMessages.push_back(outMessage);
                     ++messagesCount;
                     m_state = BeastDecoderState::FindEsc;
                 }
@@ -88,10 +92,10 @@ DecoderBackendBeast::tryDecode(const QByteArray &data, ModesData &outMessage) {
 }
 
 unsigned
-ModesDecoder::tryDecode(const QByteArray &data, ModesData &outMsg)
+ModesDecoder::tryDecode(const QByteArray &data, QVector<ModesData> &outMsgs)
 {
     unsigned max = 0, nMsg = 0;
-    if ((nMsg = m_pBeastDecoder->tryDecode(data, outMsg)) > max) {
+    if ((nMsg = m_pBeastDecoder->tryDecode(data, outMsgs)) > max) {
         // BEAST data stream detected
         m_type = ModesData::MessageType::Beast;
         max = nMsg;

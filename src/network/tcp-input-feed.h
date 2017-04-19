@@ -16,9 +16,6 @@ public:
     }
 public slots:
     void slotConnected();
-    void slotError(QAbstractSocket::SocketError e) {
-        int dummy = 42;
-    }
 
 private:
     TcpClientInputFeed *m_tcpInput{nullptr};
