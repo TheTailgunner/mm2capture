@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui network
+QT       += core gui network sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -66,7 +66,11 @@ SOURCES += src/main.cpp\
     src/network/tcp-input-feed.cpp \
     src/modes/modes-decoder.cpp \
     src/modes/modes-data.cpp \
-    src/compress/packer.cpp
+    src/compress/packer.cpp \
+    src/db/db.cpp \
+    src/db/db-chunk.cpp \
+    src/network/feed-factory.cpp \
+    src/recorder.cpp
 
 HEADERS  += src/mainwindow.h \
     src/network/base-input-feed.h \
@@ -74,7 +78,11 @@ HEADERS  += src/mainwindow.h \
     src/network/tcp-input-feed.h \
     src/modes/modes-decoder.h \
     src/modes/modes-data.h \
-    src/compress/packer.h
+    src/compress/packer.h \
+    src/db/db.h \
+    src/db/db-chunk.h \
+    src/network/feed-factory.h \
+    src/recorder.h
 
 FORMS    += mainwindow.ui
 }

@@ -19,7 +19,6 @@ DecoderBackendBeast::getFrameLength(char byte) {
 
 unsigned
 DecoderBackendBeast::tryDecode(const QByteArray &data, QVector<ModesData> &outMessages) {
-    Q_ASSERT((data.size() - 1) < BUFFER_LENGTH_BYTES);
     const char* pData = data.constData();
     int size = data.size();
     int nByte = 0;

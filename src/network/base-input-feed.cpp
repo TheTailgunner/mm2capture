@@ -2,13 +2,13 @@
 
 using namespace MM2Capture;
 
-BaseInputSession::BaseInputSession(const BaseInputFeed::Ptr& pInput):
+BaseInputSession::BaseInputSession(BaseInputFeed* pInput):
     m_pInput{pInput} {
 }
 
 void
 BaseInputSession::start() {
-    //TODO openSession in databse
+    m_isRunning = true;
 }
 
 void
@@ -16,5 +16,4 @@ BaseInputSession::stop() {
     if (m_pInput != nullptr)
         m_pInput->stop();
     m_isRunning = false;
-    // TODO closeSession in database
 }

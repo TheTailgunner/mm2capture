@@ -51,8 +51,6 @@ public:
     Packer& operator=(const Packer &) =delete;
     static QByteArray compress(const QByteArray &);
     static QByteArray decompress(const QByteArray &);
-    /*static QByteArray compress(const unsigned char*, std::size_t);
-    static QByteArray decompress(const unsigned char*, std::size_t);*/
 };
 
 }

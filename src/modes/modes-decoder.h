@@ -40,7 +40,7 @@ public:
     ModesDecoder(): m_type{ModesData::MessageType::None},
         m_pBeastDecoder{new DecoderBackendBeast()} {
     }
-    unsigned tryDecode(const QByteArray &, QVector<ModesData> &outMsgs);
+    unsigned tryDecode(const QByteArray &, QVector<ModesData> &);
 private:
     ModesData::MessageType m_type;
     QScopedPointer<DecoderBackendBeast> m_pBeastDecoder;

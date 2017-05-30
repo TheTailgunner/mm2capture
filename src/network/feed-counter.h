@@ -5,22 +5,35 @@ namespace MM2Capture {
 
 struct FeedCounter {
 public:
-    FeedCounter(): m_bytes{0L} {
+    FeedCounter() {
+        reset();
     }
 
     void reset() {
-        m_bytes = 0L;
+        m_nBytes = 0L;
+        m_nMessages = 0LL;
     }
 
+    // [bytes]
     void incBytes(unsigned long bytes) {
-        m_bytes += bytes;
+        m_nBytes += bytes;
     }
 
     unsigned long getBytes() const {
-        return m_bytes;
+        return m_nBytes;
+    }
+
+    // [messages]
+    void incMessages(unsigned long m) {
+        m_nMessages += m;
+    }
+
+    unsigned long getMessages() const {
+        return m_nMessages;
     }
 private:
-    unsigned long m_bytes;
+    unsigned long long m_nBytes;
+    unsigned long m_nMessages;
 };
 }
 #endif

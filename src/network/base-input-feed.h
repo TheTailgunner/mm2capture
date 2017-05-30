@@ -6,9 +6,50 @@
 #include <QtNetwork/QTcpSocket>
 #include <QEnableSharedFromThis>
 
+#include "../db/db.h"
 #include "feed-counter.h"
 
 namespace MM2Capture {
+
+class FeedFactory;
+
+class BaseInputFeed;
+
+class BaseInputSession: public QObject {
+    Q_OBJECT
+public:
+    using Ptr = QSharedPointer<BaseInputSession>;
+    BaseInputSession(): m_pInput{nullptr}, m_isRunning{false} {
+    }
+    BaseInputSession(BaseInputFeed*);
+    void start();
+    void stop();
+
+    inline bool isRunning() const {
+        return m_isRunning;
+    }
+
+    inline void setDBWriter(const DBWriter::Ptr &pDb) {
+        m_pDb = pDb;
+    }
+
+    virtual ~BaseInputSession() {
+        stop();
+    }
+signals:
+    void statsUpdated(const FeedCounter &);
+public slots:
+    inline void slotHandleRead() {
+        handleRead();
+    }
+protected:
+    DBWriter::Ptr m_pDb;
+    BaseInputFeed *m_pInput;
+private:
+    virtual void handleRead() = 0;
+
+    bool m_isRunning;
+};
 
 class BaseInputFeed: public QEnableSharedFromThis<BaseInputFeed> {
 public:
@@ -16,9 +57,10 @@ public:
     BaseInputFeed(): m_isRunning{false} {
     }
 
-    inline void start() {
+    inline void start(const DBWriter::Ptr &pDb) {
         if (m_isRunning)
             return;
+        m_pDb = pDb;
         implStart();
         m_isRunning = true;
     }
@@ -34,45 +76,38 @@ public:
         return m_isRunning;
     }
 
+    const QString& getIdent() const {
+        return m_ident;
+    }
+
+    inline void setDb(const DBWriter::Ptr &pDb) {
+        m_pDb = pDb;
+    }
+
+    const BaseInputSession::Ptr& getSession() const {
+        return m_pSession;
+    }
+protected:
+    BaseInputFeed(const BaseInputSession::Ptr &pSession):
+        m_pSession{pSession}, m_isRunning{false} {
+
+    }
+
+    DBWriter::Ptr m_pDb;
+    BaseInputSession::Ptr m_pSession;
+
     void setIdent(const QString& id) {
         m_ident = id;
     }
 
-    const QString& getIdent() const {
-        return m_ident;
-    }
 private:
+    friend class FeedFactory;
     virtual void implStart() = 0;
     virtual void implStop() = 0;
+    virtual void generateIdent() = 0;
 
     QString m_ident;
     bool m_isRunning;
-};
-
-class BaseInputSession: public QObject {
-    Q_OBJECT
-public:
-    using Ptr = QSharedPointer<BaseInputSession>;
-    BaseInputSession(): m_isRunning{false} {
-    }
-    BaseInputSession(const BaseInputFeed::Ptr&);
-    void start();
-    void stop();
-
-    bool isRunning() const {
-        return m_isRunning;
-    }
-public slots:
-    inline void slotHandleRead() {
-        handleRead();
-    }
-protected:
-    BaseInputFeed::Ptr m_pInput;
-private:
-    virtual void handleRead() = 0;
-
-    bool m_isRunning;
-    FeedCounter m_stats;
 };
 
 }

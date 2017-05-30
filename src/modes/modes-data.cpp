@@ -1,4 +1,5 @@
 #include <QDateTime>
+#include <QDataStream>
 
 #include "modes-data.h"
 
@@ -34,4 +35,17 @@ ModesData::loadMessageBeast(const QByteArray &data) {
         break;
     }
     m_data.append(data.data() + 9, frameLength);
+}
+
+QByteArray
+ModesData::serialize() const
+{
+    QByteArray out;
+    QDataStream strm(&out, QIODevice::WriteOnly);
+    strm << m_timestamp;
+    Q_ASSERT(m_data.length() <= 255);
+    quint8 dataLen = m_data.length() & 0xFF;
+    strm << dataLen;
+    strm << m_data;
+    return out;
 }

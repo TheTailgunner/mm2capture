@@ -4,10 +4,13 @@
 #include <QtNetwork/QTcpSocket>
 
 #include "base-input-feed.h"
+#include "feed-counter.h"
+#include "../modes/modes-decoder.h"
 
 namespace MM2Capture {
 
 class TcpClientInputFeed;
+class ModesDecoder;
 
 class SocketSignalMapper: public QObject {
     Q_OBJECT
@@ -16,6 +19,8 @@ public:
     }
 public slots:
     void slotConnected();
+    void slotError() {
+    }
 
 private:
     TcpClientInputFeed *m_tcpInput{nullptr};
@@ -24,11 +29,13 @@ private:
 class TcpInputSession: public BaseInputSession {
     Q_OBJECT
 public:
-    TcpInputSession(const BaseInputFeed::Ptr &feed):
-        BaseInputSession{feed} {
+    TcpInputSession(BaseInputFeed* feed):
+        BaseInputSession{feed}, m_pDecoder{new ModesDecoder()} {
     }
 private:
     void handleRead();
+    QScopedPointer<ModesDecoder> m_pDecoder;
+    FeedCounter m_stats;
 };
 
 class TcpClientInputFeed: public BaseInputFeed {
@@ -42,7 +49,7 @@ public:
         m_strHost = host;
     }
 
-    void setPort(const quint16 port) {
+    void setPort(quint16 port) {
         m_nPort = port;
     }
 
@@ -61,10 +68,10 @@ private:
     friend class SocketSignalMapper;
     void implStart();
     void implStop();
+    void generateIdent();
     void handleConnect();
 
     QScopedPointer<QTcpSocket> m_pSocket;
-    BaseInputSession::Ptr m_pSession;
     QString m_strHost;
     quint16 m_nPort;
     QScopedPointer<SocketSignalMapper> m_pMapper;

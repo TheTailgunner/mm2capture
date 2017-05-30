@@ -1,9 +1,14 @@
 #include "tcp-input-feed.h"
+#include "../modes/modes-data.h"
+
+#include <QVector>
 
 using namespace MM2Capture;
 
 TcpClientInputFeed::TcpClientInputFeed():
-    m_pSocket{new QTcpSocket(nullptr)}, m_pMapper{new SocketSignalMapper(this)} {
+    BaseInputFeed(BaseInputSession::Ptr(new TcpInputSession(this))),
+    m_pSocket{new QTcpSocket(nullptr)},
+    m_pMapper{new SocketSignalMapper(this)} {
 }
 
 TcpClientInputFeed::TcpClientInputFeed(const TcpClientInputFeed &f):
@@ -30,11 +35,10 @@ TcpClientInputFeed::operator =(const TcpClientInputFeed &rhs) {
 
 void
 TcpClientInputFeed::implStart() {
-    QObject::connect(m_pSocket.data(), SIGNAL(error(QAbstractSocket::SocketError)),
-                     m_pMapper.data(), SLOT(slotError(QAbstractSocket::SocketError)));
     m_pSocket->connectToHost(m_strHost, m_nPort);
     QObject::connect(m_pSocket.data(), SIGNAL(connected()),
                      m_pMapper.data(), SLOT(slotConnected()));
+    m_pSession->setDBWriter(m_pDb);
 }
 
 void
@@ -42,9 +46,14 @@ TcpClientInputFeed::implStop() {
     m_pSocket->disconnectFromHost();
 }
 
+void TcpClientInputFeed::generateIdent()
+{
+    QString ident = "inConnect(%1:%2)";
+    setIdent(ident.arg(m_strHost).arg(m_nPort));
+}
+
 void TcpClientInputFeed::handleConnect()
 {
-    m_pSession = BaseInputSession::Ptr(new TcpInputSession(sharedFromThis()));
     QObject::connect(m_pSocket.data(), SIGNAL(readyRead()),
                      m_pSession.data(), SLOT(slotHandleRead()));
 }
@@ -57,12 +66,26 @@ SocketSignalMapper::slotConnected() {
 void TcpInputSession::handleRead()
 {
     QTcpSocket* pSocket = static_cast<TcpClientInputFeed*>(
-                m_pInput.data())->getSocket();
-    QByteArray bytes;
+                m_pInput)->getSocket();
+    QVector<ModesData> messages;
     for (;;) {
         if (pSocket->bytesAvailable() > 0) {
-            bytes.clear();
-            bytes.append(pSocket->readAll());
+            qint64 nBytes = pSocket->bytesAvailable();
+            if (nBytes > 0) {
+                messages.clear();
+                unsigned nMsg = m_pDecoder->tryDecode(pSocket->readAll(),
+                                                      messages);
+                m_stats.incBytes(nBytes);
+                if (nMsg > 0) {
+                    m_stats.incMessages(nMsg);
+                    if (m_pDb) {
+                        int nMsg = messages.size();
+                        while (nMsg)
+                            nMsg -= m_pDb->addMessages(messages);
+                    }
+                }
+                emit statsUpdated(m_stats);
+            }
         }
         else
             break;
