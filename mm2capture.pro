@@ -62,8 +62,11 @@ TARGET = mm2capture
 SOURCES += src/main.cpp\
         src/mainwindow.cpp \
     src/network/base-input-feed.cpp \
+    src/network/abstract-feed.cpp \
     src/network/feed-counter.cpp \
     src/network/tcp-input-feed.cpp \
+    src/network/io-impl/abstract-io.cpp \
+    src/network/io-impl/tcp-client.cpp \
     src/modes/modes-decoder.cpp \
     src/modes/modes-data.cpp \
     src/compress/packer.cpp \
@@ -73,9 +76,12 @@ SOURCES += src/main.cpp\
     src/recorder.cpp
 
 HEADERS  += src/mainwindow.h \
+    src/network/abstract-feed.h \
     src/network/base-input-feed.h \
     src/network/feed-counter.h \
     src/network/tcp-input-feed.h \
+    src/network/io-impl/abstract-io.h \
+    src/network/io-impl/tcp-client.h \
     src/modes/modes-decoder.h \
     src/modes/modes-data.h \
     src/compress/packer.h \

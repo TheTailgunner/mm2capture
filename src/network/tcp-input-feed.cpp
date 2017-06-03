@@ -1,93 +1,49 @@
 #include "tcp-input-feed.h"
+#include <QByteArray>
+#include <stdexcept>
 #include "../modes/modes-data.h"
-
-#include <QVector>
+#include "../modes/modes-decoder.h"
 
 using namespace MM2Capture;
 
-TcpClientInputFeed::TcpClientInputFeed():
-    BaseInputFeed(BaseInputSession::Ptr(new TcpInputSession(this))),
-    m_pSocket{new QTcpSocket(nullptr)},
-    m_pMapper{new SocketSignalMapper(this)} {
+TcpClientInputFeed::TcpClientInputFeed(): AbstractInputFeed(),
+    TcpClientImpl(), m_isRunning{false}, m_dataRead{false} {
 }
 
-TcpClientInputFeed::TcpClientInputFeed(const TcpClientInputFeed &f):
-    m_pSocket{new QTcpSocket(nullptr)},
-    m_pMapper{new SocketSignalMapper(this)} {
-    m_strHost = f.m_strHost;
-    m_nPort = f.m_nPort;
+void
+TcpClientInputFeed::start() {
+    TcpClientImpl::start();
+    m_isRunning = true;
 }
 
-bool
-TcpClientInputFeed::operator ==(const TcpClientInputFeed &rhs) {
-    return m_strHost == rhs.m_strHost &&
-            m_nPort == rhs.m_nPort;
-}
-
-TcpClientInputFeed&
-TcpClientInputFeed::operator =(const TcpClientInputFeed &rhs) {
-    if (!(*this == rhs)) {
-        TcpClientInputFeed tmp{rhs};
-        qSwap(*this, tmp);
+AbstractInputFeed &
+TcpClientInputFeed::operator >>(QVector<ModesData> &out) {
+    if (!m_isRunning)
+        m_dataRead = false;
+    else {
+        QByteArray data;
+        try {
+            qint64 nBytes = TcpClientImpl::read(data);
+            if (nBytes && m_pDecoder->tryDecode(data, out) > 0)
+                m_dataRead = true;
+        } catch (const std::runtime_error &exc) {
+            m_dataRead = false;
+        }
     }
     return *this;
 }
 
 void
-TcpClientInputFeed::implStart() {
-    m_pSocket->connectToHost(m_strHost, m_nPort);
-    QObject::connect(m_pSocket.data(), SIGNAL(connected()),
-                     m_pMapper.data(), SLOT(slotConnected()));
-    m_pSession->setDBWriter(m_pDb);
+TcpClientInputFeed::stop() {
+    TcpClientImpl::stop();
+    m_isRunning = false;
+    m_dataRead = false;
 }
 
-void
-TcpClientInputFeed::implStop() {
-    m_pSocket->disconnectFromHost();
-}
-
-void TcpClientInputFeed::generateIdent()
-{
-    QString ident = "inConnect(%1:%2)";
-    setIdent(ident.arg(m_strHost).arg(m_nPort));
-}
-
-void TcpClientInputFeed::handleConnect()
-{
-    QObject::connect(m_pSocket.data(), SIGNAL(readyRead()),
-                     m_pSession.data(), SLOT(slotHandleRead()));
-}
-
-void
-SocketSignalMapper::slotConnected() {
-    m_tcpInput->handleConnect();
-}
-
-void TcpInputSession::handleRead()
-{
-    QTcpSocket* pSocket = static_cast<TcpClientInputFeed*>(
-                m_pInput)->getSocket();
-    QVector<ModesData> messages;
-    for (;;) {
-        if (pSocket->bytesAvailable() > 0) {
-            qint64 nBytes = pSocket->bytesAvailable();
-            if (nBytes > 0) {
-                messages.clear();
-                unsigned nMsg = m_pDecoder->tryDecode(pSocket->readAll(),
-                                                      messages);
-                m_stats.incBytes(nBytes);
-                if (nMsg > 0) {
-                    m_stats.incMessages(nMsg);
-                    if (m_pDb) {
-                        int nMsg = messages.size();
-                        while (nMsg)
-                            nMsg -= m_pDb->addMessages(messages);
-                    }
-                }
-                emit statsUpdated(m_stats);
-            }
-        }
-        else
-            break;
+TcpClientInputFeed::~TcpClientInputFeed() {
+    if (m_isRunning) {
+        TcpClientImpl::stop();
+        m_isRunning = false;
+        m_dataRead = false;
     }
 }

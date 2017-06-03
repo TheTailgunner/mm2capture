@@ -1,80 +1,34 @@
 #ifndef _TCP_INPUT_FEED_H
 #define _TCP_INPUT_FEED_H
 
-#include <QtNetwork/QTcpSocket>
+#include <QVector>
 
-#include "base-input-feed.h"
-#include "feed-counter.h"
-#include "../modes/modes-decoder.h"
+#include "abstract-feed.h"
+#include "io-impl/tcp-client.h"
+#include "../modes/modes-data.h"
 
 namespace MM2Capture {
 
-class TcpClientInputFeed;
-class ModesDecoder;
-
-class SocketSignalMapper: public QObject {
-    Q_OBJECT
-public:
-    SocketSignalMapper(TcpClientInputFeed *pFeed): m_tcpInput{pFeed} {
-    }
-public slots:
-    void slotConnected();
-    void slotError() {
-    }
-
-private:
-    TcpClientInputFeed *m_tcpInput{nullptr};
-};
-
-class TcpInputSession: public BaseInputSession {
-    Q_OBJECT
-public:
-    TcpInputSession(BaseInputFeed* feed):
-        BaseInputSession{feed}, m_pDecoder{new ModesDecoder()} {
-    }
-private:
-    void handleRead();
-    QScopedPointer<ModesDecoder> m_pDecoder;
-    FeedCounter m_stats;
-};
-
-class TcpClientInputFeed: public BaseInputFeed {
+class TcpClientInputFeed: public AbstractInputFeed,
+        protected TcpClientImpl {
 public:
     TcpClientInputFeed();
-    TcpClientInputFeed(const TcpClientInputFeed &);
-    bool operator==(const TcpClientInputFeed &);
-    TcpClientInputFeed& operator=(const TcpClientInputFeed &);
-
-    void setHost(const QString& host) {
-        m_strHost = host;
+    void start();
+    operator bool() const {
+        return m_dataRead;
     }
-
-    void setPort(quint16 port) {
-        m_nPort = port;
+    void setHost(const QString &strHost) {
+        TcpClientImpl::setHost(strHost);
     }
-
-    QTcpSocket* getSocket() {
-        return m_pSocket.data();
+    void setPort(quint16 nPort) {
+        TcpClientImpl::setPort(nPort);
     }
-
-    virtual ~TcpClientInputFeed() {
-        m_pSocket->disconnect();
-        m_pSession->disconnect();
-        m_pMapper->disconnect();
-        implStop();
-    }
-
+    AbstractInputFeed &operator >>(QVector<ModesData> &out);
+    void stop();
+    ~TcpClientInputFeed();
 private:
-    friend class SocketSignalMapper;
-    void implStart();
-    void implStop();
-    void generateIdent();
-    void handleConnect();
-
-    QScopedPointer<QTcpSocket> m_pSocket;
-    QString m_strHost;
-    quint16 m_nPort;
-    QScopedPointer<SocketSignalMapper> m_pMapper;
+    bool m_isRunning;
+    bool m_dataRead;
 };
 
 }

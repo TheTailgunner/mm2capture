@@ -17,7 +17,7 @@ DBChunk::addMessages(QVector<ModesData> &inVec)
         return 0;
     int count = MAX_MESSAGES_COUNT - m_messages.size();
     /* поместить в messages столько сообщенийи з входной очереди, сколько можно *
-     * (m_messages.size() <= MAX_MESSAGES_COUNT */
+     * (m_messages.size() <= MAX_MESSAGES_COUNT) */
     std::copy_n(inVec.begin(), count, std::back_inserter(m_messages));
     /* если m_messages.size() == MAX_MESSAGES_COUNT, сжать */
     if (m_messages.size() == MAX_MESSAGES_COUNT) {
