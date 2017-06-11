@@ -6,12 +6,18 @@ using namespace MM2Capture;
 
 const QString DBWriter::CONNECTION_NAME = "write";
 
-DBWriter::DBWriter(const QString &path): m_dbPath{path},
+DBWriter::DBWriter(): m_isOpened{false}, m_isSessionOpen{false},
+    m_chunkNumber{0} {
+}
+
+DBWriter::DBWriter(const QString &strFilename): m_dbPath{strFilename},
     m_isOpened{false}, m_isSessionOpen{false}, m_chunkNumber{0} {
 }
 
 void
 DBWriter::open(const QString& sessionName) {
+    if (m_dbPath.isEmpty())
+        throw std::runtime_error("DBWriter::open(): wrong DB filename");
     bool fileExists = QFile::exists(m_dbPath);
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", CONNECTION_NAME);
     db.setDatabaseName(m_dbPath);
@@ -43,6 +49,8 @@ DBWriter::addMessages(QVector<ModesData> &inVec)
 
 void
 DBWriter::close() {
+    if (!m_isOpened || !m_isSessionOpen)
+        return;
     QSqlError err;
     closeSession(err);
     try {
@@ -99,6 +107,9 @@ DBWriter::flushChunk(bool flush)
         throw std::runtime_error("flushChunk(): connection is not open");
     if (!m_isSessionOpen)
         throw std::runtime_error("flushChunk(): session is not open");
+    if (!m_currentChunk.canFlush())
+        return;
+
     QSqlQuery query("", QSqlDatabase::database(CONNECTION_NAME));
     QString strQuery = "INSERT INTO chunks(sessionID, startTimestamp, chunkNumber, chunkData) VALUES("
                     ":SID, :STS, :CN, :CD)";
@@ -106,6 +117,7 @@ DBWriter::flushChunk(bool flush)
     query.bindValue(":SID", m_sessionId);
     query.bindValue(":STS", m_currentChunk.startTime());
     query.bindValue(":CN", m_chunkNumber);
+
     if (flush) {
         QByteArray chunk;
         if (m_currentChunk.flush(chunk))

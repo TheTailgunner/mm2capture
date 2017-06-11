@@ -18,6 +18,8 @@ TcpClientImpl::TcpClientImpl(const TcpClientImpl &obj)
 
 void
 TcpClientImpl::start() {
+    if (m_isRunning)
+        return;
     m_socket.connectToHost(m_strHost, m_nPort);
     if (!m_socket.waitForConnected(CONNECT_TIMEOUT_MSEC)) {
         throw std::runtime_error(m_socket.errorString().

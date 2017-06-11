@@ -13,6 +13,8 @@ class TcpClientInputFeed: public AbstractInputFeed,
         protected TcpClientImpl {
 public:
     TcpClientInputFeed();
+    TcpClientInputFeed(const QString &strHost,
+                       quint16 nPort);
     void start();
     operator bool() const {
         return m_dataRead;

@@ -1,33 +1,56 @@
 #include "recorder.h"
+#include <stdexcept>
+#include <QVector>
+#include "modes/modes-data.h"
+#include "network/feed-counter.h"
 
 using namespace MM2Capture;
 
-Recorder::Recorder(const QString &dbPath, const BaseInputFeed::Ptr &feed, QObject *parent) : QObject(parent),
-    m_pWriter{new DBWriter(dbPath)}, m_pFeed{feed}, m_isRunning{false}
-{ }
-
-void Recorder::start()
+Recorder::Recorder(QObject *prnt): QThread(prnt),
+    m_pDbWriter{new DBWriter()}
 {
-    if (m_isRunning)
+}
+
+void
+Recorder::startWork() {
+    if (m_strOutFile.isEmpty())
+        throw std::runtime_error("Recorder::start(): empty filrname");
+    if (!m_pInputStream)
+        throw std::runtime_error("Recorder::start(): no input");
+    m_pDbWriter->setFilename(m_strOutFile);
+    m_pDbWriter->open(m_pInputStream->id());
+    m_pInputStream->start();
+}
+
+void
+Recorder::stopWork()
+{
+    m_pDbWriter->close();
+    m_pInputStream->stop();
+}
+
+void
+Recorder::run() {
+    try {
+        startWork();
+    } catch (const std::runtime_error &exc) {
+        emit error(QString(exc.what()));
+        stopWork();
         return;
-    m_pWriter->open(m_pFeed->getIdent());
-    m_pFeed->start(m_pWriter);
-    m_isRunning = true;
-    QObject::connect(m_pFeed->getSession().data(),
-                     SIGNAL(statsUpdated(FeedCounter)),
-                     this, SLOT(slotStatsUpdated(FeedCounter)));
-}
-
-void
-Recorder::stop()
-{
-    if (!m_isRunning)
-         return;
-     m_pFeed->stop();
-     m_pWriter->close();
-}
-
-void
-Recorder::slotStatsUpdated(const FeedCounter &stats) {
-    emit statsUpdated(stats);
+    }
+    QVector<ModesData> msgs;
+    while (true) {
+        if (isInterruptionRequested()) {
+            stopWork();
+            return;
+        }
+        if (*m_pInputStream >> msgs) {
+            unsigned nMsgs = msgs.size();
+            while (nMsgs) {
+                nMsgs -= m_pDbWriter->addMessages(msgs);
+            }
+            emit networkStatsUpdated(m_pInputStream->stats());
+        }
+    }
+    stopWork();
 }

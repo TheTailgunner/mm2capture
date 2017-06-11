@@ -16,11 +16,14 @@ public:
     inline bool isValid() const {
         return m_validCompressed;
     }
-    inline unsigned startTime() const {
+    inline quint64 startTime() const {
         return m_startTime;
     }
     inline const QByteArray& compressed() const {
         return m_compressed;
+    }
+    inline bool canFlush() const {
+        return  m_messages.empty() && m_validCompressed;
     }
     inline void clear() {
         m_compressed.clear();
@@ -32,7 +35,7 @@ private:
     static const int MAX_MESSAGES_COUNT;
 
     bool compress(const QByteArray &, QByteArray &);
-    unsigned m_startTime;
+    quint64 m_startTime;
     bool m_validCompressed;
     QVector<ModesData> m_messages;
     QByteArray m_compressed;

@@ -10,8 +10,17 @@ TcpClientInputFeed::TcpClientInputFeed(): AbstractInputFeed(),
     TcpClientImpl(), m_isRunning{false}, m_dataRead{false} {
 }
 
+TcpClientInputFeed::TcpClientInputFeed(const QString &strHost, quint16 nPort):
+    AbstractInputFeed(), TcpClientImpl(), m_isRunning{false}, m_dataRead{false}
+{
+    TcpClientImpl::setHost(strHost);
+    TcpClientImpl::setPort(nPort);
+}
+
 void
 TcpClientInputFeed::start() {
+    if (m_isRunning)
+        return;
     TcpClientImpl::start();
     m_isRunning = true;
 }
@@ -24,9 +33,14 @@ TcpClientInputFeed::operator >>(QVector<ModesData> &out) {
         QByteArray data;
         try {
             qint64 nBytes = TcpClientImpl::read(data);
-            if (nBytes && m_pDecoder->tryDecode(data, out) > 0)
+            m_stats.incBytes(nBytes);
+            unsigned nMsg = 0;
+            if (nBytes && (nMsg = m_pDecoder->tryDecode(data, out)) > 0) {
                 m_dataRead = true;
+                m_stats.incMessages(nMsg);
+            }
         } catch (const std::runtime_error &exc) {
+            (void) exc;
             m_dataRead = false;
         }
     }

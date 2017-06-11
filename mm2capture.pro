@@ -28,6 +28,11 @@ else:unix:!macx: LIBS += -L$$PWD/zlib/ -lz
 
 INCLUDEPATH += $$PWD/zlib/include
 DEPENDPATH += $$PWD/zlib/include
+#QMAKE_LINK = clang++
+#QMAKE_LFLAGS = -fsanitize=address
+#QMAKE_CXXFLAGS += -fsanitize=address \
+#   -fno-omit-frame-pointer \
+#    -O1 -fno-optimize-sibling-calls
 
 win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/zlib/release/libz.a
 else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/zlib/debug/libz.a
@@ -61,7 +66,6 @@ message("Normal build")
 TARGET = mm2capture
 SOURCES += src/main.cpp\
         src/mainwindow.cpp \
-    src/network/base-input-feed.cpp \
     src/network/abstract-feed.cpp \
     src/network/feed-counter.cpp \
     src/network/tcp-input-feed.cpp \
@@ -73,11 +77,10 @@ SOURCES += src/main.cpp\
     src/db/db.cpp \
     src/db/db-chunk.cpp \
     src/network/feed-factory.cpp \
-    src/recorder.cpp
+    src/recorder.cpp \
 
 HEADERS  += src/mainwindow.h \
     src/network/abstract-feed.h \
-    src/network/base-input-feed.h \
     src/network/feed-counter.h \
     src/network/tcp-input-feed.h \
     src/network/io-impl/abstract-io.h \
@@ -88,7 +91,7 @@ HEADERS  += src/mainwindow.h \
     src/db/db.h \
     src/db/db-chunk.h \
     src/network/feed-factory.h \
-    src/recorder.h
+    src/recorder.h \
 
 FORMS    += mainwindow.ui
 }

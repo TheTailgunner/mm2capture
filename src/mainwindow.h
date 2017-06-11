@@ -2,12 +2,17 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QElapsedTimer>
+
 #include "recorder.h"
-#include "network/base-input-feed.h"
+#include "network/feed-counter.h"
 
 namespace Ui {
 class MainWindow;
 }
+
+class QThread;
+using namespace MM2Capture;
 
 class MainWindow : public QMainWindow
 {
@@ -16,14 +21,23 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
+signals:
+    void started();
+    void stopped();
+public slots:
+    void slotSelectFile();
 private slots:
-    void slotStart();
-    void slotStop();
+    void slotRecordStart();
+    void slotRecordStop();
+    void slotUpdateRecordStats(const FeedCounter &);
+    void slotRecordError(const QString &);
+
+    void slotRecorderStarted();
+    void slotRecorderFinished();
 private:
     Ui::MainWindow *ui;
     MM2Capture::Recorder* m_pRecorder;
-    MM2Capture::BaseInputFeed::Ptr m_feed;
+    QThread *m_pRecordThread;
 };
 
 #endif // MAINWINDOW_H

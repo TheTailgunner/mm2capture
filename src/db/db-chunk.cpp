@@ -5,7 +5,7 @@
 
 using namespace MM2Capture;
 
-const int DBChunk::MAX_MESSAGES_COUNT = 200;
+const int DBChunk::MAX_MESSAGES_COUNT = 2000;
 
 DBChunk::DBChunk(): m_startTime{0}, m_validCompressed{false}
 { }
@@ -15,11 +15,16 @@ DBChunk::addMessages(QVector<ModesData> &inVec)
 {
     if (!inVec.size())
         return 0;
-    int count = MAX_MESSAGES_COUNT - m_messages.size();
-    /* поместить в messages столько сообщенийи з входной очереди, сколько можно *
+    /*! push_back in m_messages as many messages as possible
      * (m_messages.size() <= MAX_MESSAGES_COUNT) */
-    std::copy_n(inVec.begin(), count, std::back_inserter(m_messages));
-    /* если m_messages.size() == MAX_MESSAGES_COUNT, сжать */
+    int nAvail = MAX_MESSAGES_COUNT - m_messages.size();
+    int nInMsgs = nAvail;
+    if (inVec.size() <= nAvail)
+        nInMsgs = inVec.size();
+    std::copy_n(inVec.begin(), nInMsgs, std::back_inserter(m_messages));
+    inVec.erase(inVec.begin(), inVec.begin() + nInMsgs);
+
+    /*! if non-compressed queue is full, trying to compress */
     if (m_messages.size() == MAX_MESSAGES_COUNT) {
         // start time of the chunk == timestamp of the first messages in the chunk
         if (m_startTime == 0) {
@@ -33,10 +38,11 @@ DBChunk::addMessages(QVector<ModesData> &inVec)
         try {
             m_validCompressed = compress(chunk, m_compressed);
         } catch (const PackerException&) {
+            // compressed chunk is ready to write
             m_validCompressed = false;
         }
     }
-    return count;
+    return nInMsgs;
 }
 
 bool DBChunk::flush(QByteArray &out)

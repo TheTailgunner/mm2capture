@@ -23,16 +23,19 @@ Packer::compress(const QByteArray &data)
     zStream.avail_in = dataLen;
     zStream.next_in = reinterpret_cast<Bytef*>(pData);
     ret = Z_OK;
+    QByteArray compressed;
     do {
-        zStream.avail_out = 256;
+        zStream.avail_out = CHUNK_LEN_BYTES;
         zStream.next_out = out;
         ret = deflate(&zStream, Z_FINISH);
         if (ret < 0)
             throw PackerException(ret);
+        compressed += QByteArray(reinterpret_cast<char*>(out),
+                                 CHUNK_LEN_BYTES - zStream.avail_out);
     } while (zStream.avail_out == 0);
-    unsigned long outLen = zStream.total_out;
+    Q_ASSERT(static_cast<unsigned long>(compressed.size()) == zStream.total_out);
     deflateEnd(&zStream);
-    return  QByteArray(reinterpret_cast<char*>(out), outLen);
+    return compressed;
 }
 
 QByteArray

@@ -15,6 +15,7 @@ class ModesDecoder;
  */
 class AbstractInputFeed {
 public:
+    using Ptr = QSharedPointer<AbstractInputFeed>;
     AbstractInputFeed();
     //! Puts stream into the running state.
     virtual void start() = 0;

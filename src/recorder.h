@@ -2,34 +2,37 @@
 #define RECORDER_H
 
 #include <QObject>
+#include <QThread>
+#include <stdexcept>
 #include "db/db.h"
-#include "network/base-input-feed.h"
-#include "network/tcp-input-feed.h"
-#include "network/feed-counter.h"
+#include "network/abstract-feed.h"
 
 namespace MM2Capture {
 
-class Recorder : public QObject
-{
+struct FeedCounter;
+
+class Recorder: public QThread {
     Q_OBJECT
 public:
-    explicit Recorder(const QString &, const BaseInputFeed::Ptr& ,
-                      QObject * = 0);
-    void start();
-    void stop();
-    ~Recorder() {
-        if (m_isRunning)
-            stop();
+    Recorder(QObject *prnt = nullptr);
+    void setInput(const AbstractInputFeed::Ptr &pIn) {
+        m_pInputStream = pIn;
     }
-
-signals:
-    void statsUpdated(const FeedCounter &);
+    void setFilename(const QString &strFn) {
+        m_strOutFile = strFn;
+    }
+protected:
+    void run();
 private slots:
-    void slotStatsUpdated(const FeedCounter &);
+    void startWork();
+    void stopWork();
+signals:
+    void error(const QString &);
+    void networkStatsUpdated(const FeedCounter &);
 private:
-    DBWriter::Ptr m_pWriter;
-    BaseInputFeed::Ptr m_pFeed;
-    bool m_isRunning;
+    AbstractInputFeed::Ptr m_pInputStream;
+    DBWriter::Ptr m_pDbWriter;
+    QString m_strOutFile;
 };
 
 }

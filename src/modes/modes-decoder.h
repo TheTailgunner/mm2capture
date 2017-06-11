@@ -1,3 +1,5 @@
+/*! \file Input data parser (so called "decoder") and parsing backends implementation
+ */
 #ifndef _MODES_DECODER_H
 #define _MODES_DECODER_H
 #include <QScopedPointer>
@@ -9,13 +11,19 @@
 namespace MM2Capture {
 
 namespace {
-
+/*! Parsing backend for BEAST input format
+ */
 class DecoderBackendBeast {
 public:
     DecoderBackendBeast(): m_nPayload{0}, m_state{BeastDecoderState::FindEsc},
         m_buffer{new char[BUFFER_LENGTH_BYTES]} {
     }
-    unsigned tryDecode(const QByteArray &, QVector<ModesData> &outMessages);
+    /*! \brief Tries to parse input data, (hopefully) containing sequence of BEAST data frames and store resulting ModesData objects in outMessages.
+     * \returns Number of succesfully parsed messages (equal with outMessages.length())
+     * \param [in] data - input bytearray (for example, just read from input AbstractInputFeed)
+     * \param [out] outMessages - vector to push_back parsed messages
+     */
+    unsigned tryDecode(const QByteArray &data, QVector<ModesData> &outMessages);
 private:
     enum class BeastDecoderState {
         FindEsc,
@@ -35,12 +43,23 @@ private:
 
 }
 
+/*! \brief Parser frontend.
+ *  \details ModesDecoder tries to determine input bytestream format (while only BEAST) and uses
+ * approprite parsing backend.
+ */
 class ModesDecoder {
 public:
     ModesDecoder(): m_type{ModesData::MessageType::None},
         m_pBeastDecoder{new DecoderBackendBeast()} {
     }
-    unsigned tryDecode(const QByteArray &, QVector<ModesData> &);
+    /*!
+     * \brief Tries to determine input data format to use appropriate backend.
+     * \details Makes a call to appropriate parsing backend.
+     * \returns Number of succesfully parsed messages (equal with outMessages.length())
+     * \param [in] data - input bytearray (for example, just read from input AbstractInputFeed)
+     * \param [out] outMessages - vector to push_back parsed messages
+     */
+    unsigned tryDecode(const QByteArray &data, QVector<ModesData> &outMessages);
 private:
     ModesData::MessageType m_type;
     QScopedPointer<DecoderBackendBeast> m_pBeastDecoder;

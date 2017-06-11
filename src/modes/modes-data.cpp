@@ -1,5 +1,6 @@
 #include <QDateTime>
 #include <QDataStream>
+#include <chrono>
 
 #include "modes-data.h"
 
@@ -8,7 +9,10 @@ using namespace MM2Capture;
 void
 ModesData::loadMessage(MessageType type, const QByteArray &data) {
     Q_ASSERT(type != MessageType::None);
-    m_timestamp = QDateTime::currentDateTime().toTime_t();
+    auto now = std::chrono::high_resolution_clock::now();
+    m_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                now.time_since_epoch()).count();
+
     switch (type) {
     case MessageType::Beast:
         loadMessageBeast(data);
