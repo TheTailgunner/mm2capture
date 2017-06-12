@@ -17,9 +17,9 @@ namespace MM2Capture {
 class AbstractIOImpl {
 public:
     /*! Puts IO facility implementation into the working state. */
-    virtual void start() = 0;
+    virtual void run() = 0;
     /*! Terminates IO facility implementation. */
-    virtual void stop() = 0;
+    virtual void terminate() = 0;
     /*!
      * \brief Reads all available bytes and rewrites passed array.
      * \param [out] out - byte array to store data (will be rewritten)

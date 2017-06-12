@@ -19,9 +19,9 @@ TcpClientInputFeed::TcpClientInputFeed(const QString &strHost, quint16 nPort):
 
 void
 TcpClientInputFeed::start() {
-    if (m_isRunning)
+    if (this->TcpClientInputFeed::m_isRunning)
         return;
-    TcpClientImpl::start();
+    TcpClientImpl::run();
     m_isRunning = true;
 }
 
@@ -49,14 +49,14 @@ TcpClientInputFeed::operator >>(QVector<ModesData> &out) {
 
 void
 TcpClientInputFeed::stop() {
-    TcpClientImpl::stop();
+    TcpClientImpl::terminate();
     m_isRunning = false;
     m_dataRead = false;
 }
 
 TcpClientInputFeed::~TcpClientInputFeed() {
     if (m_isRunning) {
-        TcpClientImpl::stop();
+        TcpClientImpl::terminate();
         m_isRunning = false;
         m_dataRead = false;
     }

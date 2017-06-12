@@ -3,6 +3,7 @@
 #include <QVector>
 #include "modes/modes-data.h"
 #include "network/feed-counter.h"
+#include "network/tcp-input-feed.h"
 
 using namespace MM2Capture;
 
@@ -14,9 +15,9 @@ Recorder::Recorder(QObject *prnt): QThread(prnt),
 void
 Recorder::startWork() {
     if (m_strOutFile.isEmpty())
-        throw std::runtime_error("Recorder::start(): empty filrname");
+        emit error("No DB filename");
     if (!m_pInputStream)
-        throw std::runtime_error("Recorder::start(): no input");
+        emit error("No input stream");
     m_pDbWriter->setFilename(m_strOutFile);
     m_pDbWriter->open(m_pInputStream->id());
     m_pInputStream->start();

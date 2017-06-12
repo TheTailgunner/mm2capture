@@ -16,6 +16,7 @@ namespace MM2Capture {
  * \brief Blocking TCP client implementation.
  * \todo Implement TCP Keepalive.
  */
+
 class TcpClientImpl: public AbstractIOImpl {
 public:
     TcpClientImpl();
@@ -24,8 +25,8 @@ public:
      */
     TcpClientImpl(const TcpClientImpl &obj);
     TcpClientImpl &operator=(const TcpClientImpl &) =delete;
-    void start() override;
-    void stop() override;
+    void run() override;
+    void terminate() override;
     /*! \exception Throws std::runtime_exception() if error occured.
      */
     qint64 read(QByteArray &in) override;

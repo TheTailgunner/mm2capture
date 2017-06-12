@@ -17,7 +17,7 @@ TcpClientImpl::TcpClientImpl(const TcpClientImpl &obj)
 }
 
 void
-TcpClientImpl::start() {
+TcpClientImpl::run() {
     if (m_isRunning)
         return;
     m_socket.connectToHost(m_strHost, m_nPort);
@@ -30,7 +30,7 @@ TcpClientImpl::start() {
 }
 
 void
-TcpClientImpl::stop() {
+TcpClientImpl::terminate() {
     m_socket.close();
     m_isRunning = false;
 }
@@ -60,5 +60,5 @@ qint64 TcpClientImpl::write(const QByteArray &in) {
 }
 
 TcpClientImpl::~TcpClientImpl() {
-    stop();
+    terminate();
 }
