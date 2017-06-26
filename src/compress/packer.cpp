@@ -47,7 +47,6 @@ Packer::decompress(const QByteArray &data)
     char* pCompressed = const_cast<char*>(data.data());
     int compressedLen = data.size();
     z_stream zStream;
-    int flushState = Z_NO_FLUSH;
     QByteArray outData;
     zStream.zalloc = Z_NULL;
     zStream.zfree = Z_NULL;
@@ -61,9 +60,7 @@ Packer::decompress(const QByteArray &data)
         zStream.avail_out = CHUNK_LEN_BYTES;
         zStream.next_out = chunk;
         ret = inflate(&zStream, Z_FINISH);
-        if (Z_BUF_ERROR == ret)
-            flushState = Z_FINISH;
-        else if (ret < 0)
+        if (ret < 0)
             throw PackerException(ret);
         outData.append(reinterpret_cast<char*>(chunk),
                        CHUNK_LEN_BYTES - zStream.avail_out);

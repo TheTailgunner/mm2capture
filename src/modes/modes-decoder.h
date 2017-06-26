@@ -10,7 +10,6 @@
 
 namespace MM2Capture {
 
-namespace {
 /*! Parsing backend for BEAST input format
  */
 class DecoderBackendBeast {
@@ -40,8 +39,6 @@ private:
     BeastDecoderState m_state;
     QScopedArrayPointer<char> m_buffer; // current frame data
 };
-
-}
 
 /*! \brief Parser frontend.
  *  \details ModesDecoder tries to determine input bytestream format (while only BEAST) and uses

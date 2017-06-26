@@ -19,8 +19,8 @@ Recorder::startWork() {
     if (!m_pInputStream)
         emit error("No input stream");
     m_pDbWriter->setFilename(m_strOutFile);
-    m_pDbWriter->open(m_pInputStream->id());
     m_pInputStream->start();
+    m_pDbWriter->open(m_pInputStream->id());
 }
 
 void

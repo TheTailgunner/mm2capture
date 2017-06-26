@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QThread>
 #include <stdexcept>
-#include "db/db.h"
+#include "db/db-writer.h"
 #include "network/abstract-feed.h"
 
 namespace MM2Capture {

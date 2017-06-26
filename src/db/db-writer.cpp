@@ -1,4 +1,5 @@
-#include "db.h"
+#include "db-writer.h"
+#include "db-exception.h"
 
 #include <QFile>
 
@@ -38,29 +39,31 @@ DBWriter::open(const QString& sessionName) {
 }
 
 unsigned
-DBWriter::addMessages(QVector<ModesData> &inVec)
+DBWriter::addMessages(QVector<ModesData> &msgs)
 {
     if (m_currentChunk.isValid()) {
         flushChunk(false);
     }
-    unsigned count = m_currentChunk.addMessages(inVec);
+    unsigned count = m_currentChunk.addMessages(msgs);
     return count;
 }
 
 void
 DBWriter::close() {
-    if (!m_isOpened || !m_isSessionOpen)
+    if (!m_isOpened)
         return;
     QSqlError err;
-    closeSession(err);
     try {
         flushChunk(true);
-    } catch (const DBException&) {
-        // logging
+    } catch (const DBException& exc) {
+        qDebug() << exc.what();
     }
-
+    // TODO logging if closeSession() fails
+    if (m_isSessionOpen)
+        closeSession(err);
     QSqlDatabase::database(CONNECTION_NAME).close();
     QSqlDatabase::removeDatabase(CONNECTION_NAME);
+    m_isOpened = m_isSessionOpen = false;
 }
 
 QSqlError
@@ -101,7 +104,7 @@ DBWriter::openSession(QSqlDatabase &db, const QString &sessionName,
 }
 
 void
-DBWriter::flushChunk(bool flush)
+DBWriter::flushChunk(bool forceFlush)
 {
     if (!m_isOpened)
         throw std::runtime_error("flushChunk(): connection is not open");
@@ -118,7 +121,7 @@ DBWriter::flushChunk(bool flush)
     query.bindValue(":STS", m_currentChunk.startTime());
     query.bindValue(":CN", m_chunkNumber);
 
-    if (flush) {
+    if (forceFlush) {
         QByteArray chunk;
         if (m_currentChunk.flush(chunk))
             query.bindValue(":CD", chunk);

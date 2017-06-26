@@ -4,8 +4,11 @@
 #include <QMainWindow>
 #include <QElapsedTimer>
 
+#include "db/db-reader.h"
 #include "recorder.h"
+#include "player.h"
 #include "network/feed-counter.h"
+#include "outputsessiondialog.h"
 
 namespace Ui {
 class MainWindow;
@@ -31,13 +34,16 @@ private slots:
     void slotRecordStop();
     void slotUpdateRecordStats(const FeedCounter &);
     void slotRecordError(const QString &);
-
     void slotRecorderStarted();
     void slotRecorderFinished();
+
+    void slotSelectPlayerSession();
+    void slotPlayStart();
 private:
     Ui::MainWindow *ui;
     MM2Capture::Recorder* m_pRecorder;
-    QThread *m_pRecordThread;
+    MM2Capture::Player *m_pPlayer;
+    DBReader::Ptr m_pDbReader;
 };
 
 #endif // MAINWINDOW_H

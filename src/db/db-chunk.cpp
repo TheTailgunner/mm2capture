@@ -2,6 +2,7 @@
 #include "../compress/packer.h"
 
 #include <algorithm>
+#include <QDebug>
 
 using namespace MM2Capture;
 
@@ -35,12 +36,7 @@ DBChunk::addMessages(QVector<ModesData> &inVec)
             chunk.append(m_messages[0].serialize());
             m_messages.pop_front();
         }
-        try {
-            m_validCompressed = compress(chunk, m_compressed);
-        } catch (const PackerException&) {
-            // compressed chunk is ready to write
-            m_validCompressed = false;
-        }
+        m_validCompressed = compress(chunk, m_compressed);
     }
     return nInMsgs;
 }
@@ -61,7 +57,8 @@ DBChunk::compress(const QByteArray &inData, QByteArray &outData)
 {
     try {
         outData = Packer::compress(inData);
-    } catch (const PackerException&) {
+    } catch (const PackerException& exc) {
+        qDebug() << exc.what();
         return false;
     }
     return true;

@@ -38,19 +38,19 @@ TcpClientImpl::terminate() {
 qint64
 TcpClientImpl::read(QByteArray &in) {
     if (!m_isRunning)
-        throw std::runtime_error("TcpClientImpl::read(): does not started");
+        throw std::runtime_error("TcpClientImpl::read(): did not started");
     if (!m_socket.waitForReadyRead(-1))
         throw std::runtime_error(m_socket.errorString().
                                  toStdString());
     qint64 nBytesToRead = m_socket.bytesAvailable();
     if (nBytesToRead)
-        in = std::move(m_socket.readAll());
+        in = m_socket.readAll();
     return nBytesToRead;
 }
 
 qint64 TcpClientImpl::write(const QByteArray &in) {
     if (!m_isRunning)
-        throw std::runtime_error("TcpClientImpl::read(): does not started");
+        throw std::runtime_error("TcpClientImpl::read(): did not started");
     m_socket.write(in);
     if (!m_socket.waitForBytesWritten(-1)) {
         throw std::runtime_error(m_socket.errorString().

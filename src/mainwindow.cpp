@@ -1,13 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "network/tcp-input-feed.h"
+#include "outputsessiondialog.h"
 
 #include <QMessageBox>
 #include <QThread>
 #include <stdexcept>
 #include <QIntValidator>
 #include <QFileDialog>
-//#include <QtGlobal>
 
 using namespace MM2Capture;
 
@@ -32,19 +32,23 @@ QString formatBytesCount(unsigned long nBytes) {
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_pRecorder{new Recorder()}
+    m_pRecorder{new Recorder(this)},
+    m_pPlayer{new Player(this)}
 {
     ui->setupUi(this);
-    ui->portEdit->setValidator(new QIntValidator(0, 1 << 16, this));
+    ui->inputPortEdit->setValidator(new QIntValidator(0, 1 << 16, this));
     QObject::connect(ui->startRecordButton, SIGNAL(clicked(bool)), this, SLOT(slotRecordStart()));
     QObject::connect(ui->stopRecordButton, SIGNAL(clicked(bool)), this, SLOT(slotRecordStop()));
     QObject::connect(m_pRecorder, SIGNAL(started()), this, SLOT(slotRecorderStarted()));
-    QObject::connect(m_pRecorder, SIGNAL(networkStatsUpdated(FeedCounter)),
-                     this, SLOT(slotUpdateRecordStats(FeedCounter)), Qt::DirectConnection);
+    /*QObject::connect(m_pRecorder, SIGNAL(networkStatsUpdated(FeedCounter)),
+                     this, SLOT(slotUpdateRecordStats(FeedCounter)), Qt::DirectConnection);*/
     QObject::connect(m_pRecorder, SIGNAL(error(QString)), this, SLOT(slotRecordError(QString)));
     QObject::connect(m_pRecorder, SIGNAL(finished()), this, SLOT(slotRecorderFinished()));
-    QObject::connect(ui->selectFileButton, SIGNAL(clicked(bool)), this,
+    QObject::connect(ui->selectInputFileButton, SIGNAL(clicked(bool)), this,
                      SLOT(slotSelectFile()));
+
+    QObject::connect(ui->startPlayerButton, SIGNAL(clicked(bool)),
+                     this, SLOT(slotPlayStart()));
 }
 
 MainWindow::~MainWindow()
@@ -55,23 +59,23 @@ MainWindow::~MainWindow()
 void
 MainWindow::slotRecordStart()
 {
-    if (ui->fileNameEdit->text().isEmpty()) {
+    if (ui->inputFilenameEdit->text().isEmpty()) {
         QMessageBox::critical(this, "Error",
                               "No output filename",
                               QMessageBox::Ok);
         return;
     }
-    if (ui->addressEdit->text().isEmpty() ||
-            ui->portEdit->text().isEmpty()) {
+    if (ui->inputAddressEdit->text().isEmpty() ||
+            ui->inputPortEdit->text().isEmpty()) {
         QMessageBox::critical(this, "Error",
                               "No host/port to connect",
                               QMessageBox::Ok);
         return;
     }
-    AbstractInputFeed::Ptr pFeed(new TcpClientInputFeed(ui->addressEdit->text(),
-                                                        ui->portEdit->text().toInt()));
+    AbstractInputFeed::Ptr pFeed(new TcpClientInputFeed(ui->inputAddressEdit->text(),
+                                                        ui->inputPortEdit->text().toInt()));
     m_pRecorder->setInput(pFeed);
-    m_pRecorder->setFilename(ui->fileNameEdit->text());
+    m_pRecorder->setFilename(ui->inputFilenameEdit->text());
     m_pRecorder->start();
 }
 
@@ -84,10 +88,11 @@ MainWindow::slotRecordStop() {
 void
 MainWindow::slotUpdateRecordStats(const FeedCounter &stats)
 {
-    ui->bytesCountLabel->setText(formatBytesCount(
+    qDebug() << "Recorder stats updated";
+    ui->inBytesCountLabel->setText(formatBytesCount(
                                      stats.getBytes())
                                  );
-    ui->msgsCountLabel->setText(QString("%1").arg(
+    ui->inMsgsCountLabel->setText(QString("%1").arg(
                                     stats.getMessages()
                                     ));
 }
@@ -103,10 +108,10 @@ void MainWindow::slotRecordError(const QString &strDescr)
 void
 MainWindow::slotRecorderStarted()
 {
-    ui->fileNameEdit->setEnabled(false);
-    ui->selectFileButton->setEnabled(false);
-    ui->addressEdit->setEnabled(false);
-    ui->portEdit->setEnabled(false);
+    ui->inputFilenameEdit->setEnabled(false);
+    ui->selectInputFileButton->setEnabled(false);
+    ui->inputAddressEdit->setEnabled(false);
+    ui->inputPortEdit->setEnabled(false);
     ui->startRecordButton->setEnabled(false);
     ui->stopRecordButton->setEnabled(true);
     setWindowTitle("[REC] MM2Capture");
@@ -114,20 +119,59 @@ MainWindow::slotRecorderStarted()
 
 void MainWindow::slotRecorderFinished()
 {
-    ui->fileNameEdit->setEnabled(true);
-    ui->selectFileButton->setEnabled(true);
-    ui->addressEdit->setEnabled(true);
-    ui->portEdit->setEnabled(true);
+    ui->inputFilenameEdit->setEnabled(true);
+    ui->selectInputFileButton->setEnabled(true);
+    ui->inputAddressEdit->setEnabled(true);
+    ui->inputPortEdit->setEnabled(true);
     ui->startRecordButton->setEnabled(true);
     ui->stopRecordButton->setEnabled(false);
     setWindowTitle("MM2Capture");
 }
 
 void
+MainWindow::slotSelectPlayerSession()
+{
+}
+
+void
 MainWindow::slotSelectFile() {
-    QString fileName = QFileDialog::getSaveFileName(this,
+    QString fileName = QFileDialog::getOpenFileName(this,
                                                     "Save DB",
                                                     "", "SQLite3 DB(*.db);");
     if (!fileName.isEmpty())
-        ui->fileNameEdit->setText(fileName);
+        ui->inputFilenameEdit->setText(fileName);
+}
+
+void
+MainWindow::slotPlayStart() {
+    if (ui->outputFilenameEdit->text().isEmpty()) {
+        QMessageBox::critical(this, "Error",
+                              "No filename to play",
+                              QMessageBox::Ok);
+        return;
+    }
+    if (ui->outputAddressEdit->text().isEmpty() ||
+            ui->outputPortEdit->text().isEmpty()) {
+        QMessageBox::critical(this, "Error",
+                              "No host/port to output connect",
+                              QMessageBox::Ok);
+        return;
+    }
+    if (!m_pDbReader) {
+        m_pDbReader = DBReader::Ptr(new DBReader());
+    }
+
+    m_pDbReader->setFile(ui->outputFilenameEdit->text());
+    try {
+        m_pDbReader->open();
+        OutputSessionDialog dialog;
+        dialog.useReader(*m_pDbReader);
+        dialog.exec();
+    } catch (const std::runtime_error &exc) {
+        QMessageBox::critical(this, "Error",
+                              QString(exc.what()),
+                              QMessageBox::Ok);
+        return;
+    }
+    m_pPlayer->setReader(m_pDbReader);
 }

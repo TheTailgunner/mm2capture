@@ -66,6 +66,7 @@ message("Normal build")
 TARGET = mm2capture
 SOURCES += src/main.cpp\
         src/mainwindow.cpp \
+        src/outputsessiondialog.cpp \
     src/network/abstract-feed.cpp \
     src/network/feed-counter.cpp \
     src/network/tcp-input-feed.cpp \
@@ -74,12 +75,16 @@ SOURCES += src/main.cpp\
     src/modes/modes-decoder.cpp \
     src/modes/modes-data.cpp \
     src/compress/packer.cpp \
-    src/db/db.cpp \
+    src/db/db-exception.cpp \
+    src/db/db-reader.cpp \
+    src/db/db-writer.cpp \
     src/db/db-chunk.cpp \
     src/network/feed-factory.cpp \
     src/recorder.cpp \
+    src/player.cpp
 
 HEADERS  += src/mainwindow.h \
+    src/outputsessiondialog.h \
     src/network/abstract-feed.h \
     src/network/feed-counter.h \
     src/network/tcp-input-feed.h \
@@ -88,12 +93,17 @@ HEADERS  += src/mainwindow.h \
     src/modes/modes-decoder.h \
     src/modes/modes-data.h \
     src/compress/packer.h \
-    src/db/db.h \
+    src/db/db-exception.h \
+    src/db/db-reader.h \
+    src/db/db-writer.h \
     src/db/db-chunk.h \
     src/network/feed-factory.h \
     src/recorder.h \
+    src/player.h \
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    outputsessiondialog.ui
 }
+
 
 

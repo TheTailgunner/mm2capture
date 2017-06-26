@@ -6,7 +6,7 @@
 #include <QDebug>
 #include <QVector>
 #include <QTimer>
-#include "db/db.h"
+
 using namespace MM2Capture;
 
 int main(int argc, char *argv[])
