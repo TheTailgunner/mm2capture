@@ -15,11 +15,13 @@ class OutputSessionDialog : public QDialog
 
 public:
     explicit OutputSessionDialog(QWidget *parent = 0);
-    void useReader(const DBReader &);
-    quint64 selectedSessionId() const;
+    void useReader(const MM2Capture::DBReader &);
+    quint64 selectedSessionId() const {
+        return m_selectedId;
+    }
     ~OutputSessionDialog();
 private slots:
-    void slotAccepted();
+    void slotRowSelected(const QModelIndex &);
 private:
     Ui::OutputSessionDialog *ui;
     QSqlQueryModel m_currentModel;

@@ -35,7 +35,8 @@ TcpClientInputFeed::operator >>(QVector<ModesData> &out) {
             qint64 nBytes = TcpClientImpl::read(data);
             m_stats.incBytes(nBytes);
             unsigned nMsg = 0;
-            if (nBytes && (nMsg = m_pDecoder->tryDecode(data, out)) > 0) {
+            if (nBytes &&
+                    (nMsg = m_pDecoder->tryDecode(data, out)) > 0) {
                 m_dataRead = true;
                 m_stats.incMessages(nMsg);
             }

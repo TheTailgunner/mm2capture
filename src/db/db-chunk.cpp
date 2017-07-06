@@ -22,7 +22,8 @@ DBChunk::addMessages(QVector<ModesData> &inVec)
     int nInMsgs = nAvail;
     if (inVec.size() <= nAvail)
         nInMsgs = inVec.size();
-    std::copy_n(inVec.begin(), nInMsgs, std::back_inserter(m_messages));
+    std::copy_n(inVec.begin(), nInMsgs,
+                std::back_inserter(m_messages));
     inVec.erase(inVec.begin(), inVec.begin() + nInMsgs);
 
     /*! if non-compressed queue is full, trying to compress */

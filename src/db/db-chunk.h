@@ -12,9 +12,13 @@ class DBChunk
 {
 public:
     DBChunk();
+
     unsigned addMessages(QVector<ModesData> &);
     inline bool isValid() const {
         return m_validCompressed;
+    }
+    inline bool canFlush() const {
+        return m_messages.size() > 0 || m_validCompressed;
     }
     inline quint64 startTime() const {
         return m_startTime;
@@ -22,10 +26,8 @@ public:
     inline const QByteArray& compressed() const {
         return m_compressed;
     }
-    inline bool canFlush() const {
-        return  m_messages.empty() && m_validCompressed;
-    }
     inline void clear() {
+        m_messages.clear();
         m_compressed.clear();
         m_validCompressed = false;
         m_startTime = 0;

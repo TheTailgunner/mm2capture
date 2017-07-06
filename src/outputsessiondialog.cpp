@@ -12,10 +12,12 @@ OutputSessionDialog::OutputSessionDialog(QWidget *parent) :
     setFixedSize(size());
     setWindowTitle("Sessions availble to play");
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    QObject::connect(ui->tableView, SIGNAL(clicked(QModelIndex)),
+                     this, SLOT(slotRowSelected(QModelIndex)));
 }
 
 void
-OutputSessionDialog::useReader(const DBReader &reader)
+OutputSessionDialog::useReader(const MM2Capture::DBReader &reader)
 {
     try {
         QSqlQuery query = reader.getAvailableSessions();
@@ -32,8 +34,8 @@ OutputSessionDialog::useReader(const DBReader &reader)
 }
 
 void
-OutputSessionDialog::slotAccepted() {
-
+OutputSessionDialog::slotRowSelected(const QModelIndex &ind) {
+    m_selectedId = ind.row();
 }
 
 OutputSessionDialog::~OutputSessionDialog()

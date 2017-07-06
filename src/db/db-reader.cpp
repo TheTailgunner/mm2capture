@@ -1,7 +1,11 @@
 #include "db-reader.h"
 #include "db-exception.h"
+#include "db-chunk.h"
 
 #include <QFile>
+#include <QByteArray>
+
+using namespace MM2Capture;
 
 const QString DBReader::CONNECTION_NAME = "reader";
 
@@ -32,6 +36,36 @@ DBReader::open() {
         QSqlDatabase::removeDatabase(CONNECTION_NAME);
         throw DBException(err);
     }
+}
+
+void
+DBReader::tryUseSession(quint64 sessionId)
+{
+    if (!m_isOpen || m_sessionSelected)
+        return;
+    QSqlQuery query("", m_dbHandler);
+    QString strQuery = "SELECT startTimestamp, chunkData FROM"
+                       "chunks WHERE sessionID = :SID"
+                       "ORDER by chunkNumber;";
+    query.prepare(strQuery);
+    query.bindValue(":SID", sessionId);
+    if (!query.exec()) {
+       QSqlError err = query.lastError();
+       throw DBException(err);
+    }
+    m_sessionData = query;
+    m_sessionSelected = true;
+    m_sessionId = sessionId;
+}
+
+bool
+DBReader::getNextChunk(DBChunk &outChunk) {
+    if (m_sessionData.next()) {
+        quint64 chunkTimestamp = m_sessionData.value(0).toLongLong();
+        QByteArray chunkData = m_sessionData.value(1).toByteArray();
+        return true;
+    }
+    return false;
 }
 
 void
