@@ -6,6 +6,18 @@
 
 using namespace MM2Capture;
 
+namespace MM2Capture {
+
+QDataStream &operator<<(QDataStream &strm, const ModesData &msg) {
+    strm.setVersion(QDataStream::Qt_4_0);
+    strm << static_cast<qint32>(msg.m_type);
+    strm << msg.m_timestamp;
+    strm << msg.m_data;
+    return strm;
+}
+
+}
+
 void
 ModesData::loadMessage(MessageType type, const QByteArray &data) {
     Q_ASSERT(type != MessageType::None);
@@ -39,30 +51,4 @@ ModesData::loadMessageBeast(const QByteArray &data) {
         break;
     }
     m_data.append(data.data() + 9, frameLength);
-}
-
-QByteArray
-ModesData::serialize() const
-{
-    QByteArray out;
-    QDataStream strm(&out, QIODevice::WriteOnly);
-    strm << m_timestamp;
-    Q_ASSERT(m_data.length() <= 255);
-    quint8 dataLen = m_data.length() & 0xFF;
-    strm << dataLen;
-    strm << m_data;
-    return out;
-}
-
-ModesData
-ModesData::fromRaw(const quint8 *pRaw, quint64 timestamp,
-                   int len) {
-    ModesData result;
-    result.m_timestamp = timestamp;
-    result.m_type = MessageType::None;
-    result.m_data = std::move(QByteArray::fromRawData(
-                           reinterpret_cast<const char*>(pRaw),
-                           len
-                           ));
-    return result;
 }

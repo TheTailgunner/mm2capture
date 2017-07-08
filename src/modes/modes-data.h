@@ -1,5 +1,6 @@
 #ifndef _MODES_DATA_H
 #define _MODES_DATA_H
+#include <QDataStream>
 #include <QByteArray>
 
 namespace MM2Capture {
@@ -16,10 +17,7 @@ public:
     inline quint64 timestamp() const {
         return m_timestamp;
     }
-    QByteArray serialize() const;
-
-    static ModesData fromRaw(const quint8 *, quint64,
-                             int);
+    friend QDataStream &operator<<(QDataStream &, const ModesData &);
 private:
     void loadMessageBeast(const QByteArray &);
     MessageType m_type;

@@ -10,7 +10,6 @@
 #include <stdexcept>
 
 #include "../modes/modes-data.h"
-#include "db-chunk.h"
 
 namespace MM2Capture {
 
@@ -48,8 +47,6 @@ public:
      * erased from msgs.
      * \param [in] msgs - input messages list
      * \throws std::runtime_error if connection/session is not open.
-     * DBException in case of SQLite error.
-     * PackerException in case of Zlib error.
      * \returns Number of messages added.
      * \warning Should be called in a loop until input messages list is not empty or call returns not null value.
      */
@@ -63,17 +60,20 @@ public:
     }
 private:
     static const QString CONNECTION_NAME;
+    static const int MAX_MESSAGES_TO_FLUSH = 2000;
+
+
     QString m_dbPath;
     QString m_sessionName;
     bool m_isOpened;
     bool m_isSessionOpen;
     quint64 m_sessionId;
-    DBChunk m_currentChunk;
+    QVector<ModesData> m_msgsToFlush;   // current messages' chunk
     quint64 m_chunkNumber;
 
     QSqlError prepareTables(QSqlDatabase &);
     bool openSession(QSqlDatabase &, const QString &, QSqlError &);
-    void flushChunk(bool forceFlush);
+    void flushChunk();
     bool closeSession(QSqlError &);
 };
 

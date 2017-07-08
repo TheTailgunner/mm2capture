@@ -1,7 +1,11 @@
 #include "db-writer.h"
 #include "db-exception.h"
+#include "../compress/packer.h"
 
 #include <QFile>
+#include <algorithm>
+#include <QDataStream>
+#include <stdexcept>
 
 using namespace MM2Capture;
 
@@ -41,11 +45,48 @@ DBWriter::open(const QString& sessionName) {
 unsigned
 DBWriter::addMessages(QVector<ModesData> &msgs)
 {
-    if (m_currentChunk.isValid()) {
-        flushChunk(false);
+    if (!m_isSessionOpen ||
+            !m_isOpened)
+        throw std::runtime_error("DBWriter::addMessages: connection is not open");
+    unsigned nResult = 0;
+    int spaceAvail = MAX_MESSAGES_TO_FLUSH - m_msgsToFlush.size();
+    int nInMsgs = spaceAvail;
+    if (msgs.size() <= spaceAvail)
+        nInMsgs = msgs.size();
+
+    if (nInMsgs > 0)
+        std::copy_n(msgs.begin(), nInMsgs,
+                  std::back_inserter(m_msgsToFlush));
+    nResult += nInMsgs;
+
+    if (m_msgsToFlush.size() == MAX_MESSAGES_TO_FLUSH) {
+        try {
+            flushChunk();
+        } catch (const std::runtime_error &exc) {
+            (void) exc;
+            // erase passed messages from the flush buffer on error -
+            // restoring passed message buffer
+            m_msgsToFlush.erase(m_msgsToFlush.begin() + nInMsgs,
+                                m_msgsToFlush.end());
+            // TODO log output
+            return 0;
+        }
     }
-    unsigned count = m_currentChunk.addMessages(msgs);
-    return count;
+
+    msgs.erase(msgs.begin(), msgs.begin() + nInMsgs);
+
+    if (msgs.size() > 0) {
+        spaceAvail = MAX_MESSAGES_TO_FLUSH;
+        nInMsgs = spaceAvail;
+        if (msgs.size() <= spaceAvail)
+            nInMsgs = msgs.size();
+        if (nInMsgs > 0) {
+            std::copy_n(msgs.begin(), nInMsgs, std::back_inserter(m_msgsToFlush));
+            msgs.erase(msgs.begin(), msgs.begin() + nInMsgs);
+        }
+        nResult += nInMsgs;
+    }
+    return nResult;
 }
 
 void
@@ -54,8 +95,8 @@ DBWriter::close() {
         return;
     QSqlError err;
     try {
-        flushChunk(true);
-    } catch (const DBException& exc) {
+        flushChunk();
+    } catch (const std::runtime_error& exc) {
         qDebug() << exc.what();
     }
     // TODO logging if closeSession() fails
@@ -104,36 +145,33 @@ DBWriter::openSession(QSqlDatabase &db, const QString &sessionName,
 }
 
 void
-DBWriter::flushChunk(bool forceFlush)
+DBWriter::flushChunk()
 {
-    if (!m_isOpened)
-        throw std::runtime_error("flushChunk(): connection is not open");
-    if (!m_isSessionOpen)
-        throw std::runtime_error("flushChunk(): session is not open");
-    if (!m_currentChunk.canFlush())
+    if (m_msgsToFlush.size() == 0)
         return;
-
     QSqlQuery query("", QSqlDatabase::database(CONNECTION_NAME));
     QString strQuery = "INSERT INTO chunks(sessionID, startTimestamp, chunkNumber, chunkData) VALUES("
                     ":SID, :STS, :CN, :CD)";
     query.prepare(strQuery);
     query.bindValue(":SID", m_sessionId);
-    query.bindValue(":STS", m_currentChunk.startTime());
+    query.bindValue(":STS", m_msgsToFlush[0].timestamp());  // timestamp of the chunk is the timestamp of first message in current one
     query.bindValue(":CN", m_chunkNumber);
 
-    if (forceFlush) {
-        QByteArray chunk;
-        if (m_currentChunk.flush(chunk))
-            query.bindValue(":CD", chunk);
-    }
-    else
-        query.bindValue(":CD", m_currentChunk.compressed());
+    QByteArray serializedMessagesData;
+    QDataStream strm(&serializedMessagesData, QIODevice::WriteOnly);
+    strm.setVersion(QDataStream::Qt_4_0);
+
+    strm << m_msgsToFlush;
+
+    QByteArray deflatedData = Packer::compress(serializedMessagesData);
+    m_msgsToFlush.clear();
+    query.bindValue(":CD", deflatedData);
+
     query.exec();
     QSqlError err = query.lastError();
     if (err.type() != QSqlError::NoError)
         throw DBException(err);
     ++m_chunkNumber;
-    m_currentChunk.clear();
 }
 
 bool
