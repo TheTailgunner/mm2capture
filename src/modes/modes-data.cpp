@@ -53,3 +53,16 @@ ModesData::serialize() const
     strm << m_data;
     return out;
 }
+
+ModesData
+ModesData::fromRaw(const quint8 *pRaw, quint64 timestamp,
+                   int len) {
+    ModesData result;
+    result.m_timestamp = timestamp;
+    result.m_type = MessageType::None;
+    result.m_data = std::move(QByteArray::fromRawData(
+                           reinterpret_cast<const char*>(pRaw),
+                           len
+                           ));
+    return result;
+}

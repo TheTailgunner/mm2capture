@@ -14,6 +14,9 @@ public:
     DBChunk();
 
     unsigned addMessages(QVector<ModesData> &);
+    unsigned parseCompressed(const QByteArray &,
+                             QVector<ModesData>);
+
     inline bool isValid() const {
         return m_validCompressed;
     }

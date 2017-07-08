@@ -17,6 +17,9 @@ public:
         return m_timestamp;
     }
     QByteArray serialize() const;
+
+    static ModesData fromRaw(const quint8 *, quint64,
+                             int);
 private:
     void loadMessageBeast(const QByteArray &);
     MessageType m_type;

@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <QDebug>
+#include <QDataStream>
 
 using namespace MM2Capture;
 
@@ -42,7 +43,40 @@ DBChunk::addMessages(QVector<ModesData> &inVec)
     return nInMsgs;
 }
 
-bool DBChunk::flush(QByteArray &out)
+unsigned
+DBChunk::parseCompressed(const QByteArray &deflated,
+                         QVector<ModesData> parsedMsgs) {
+    QByteArray inflated;
+    try {
+       inflated = Packer::decompress(deflated);
+    } catch (const PackerException &exc) {
+        // TODO error logging
+        (void) exc;
+        return 0;
+    }
+
+    unsigned nAvail = inflated.size();
+    QDataStream strm(&inflated,  QIODevice::ReadOnly);
+    quint64 timestamp;
+    quint8 frameLen;
+    quint8 frame[255];
+
+    while (nAvail) {
+        strm >> timestamp;
+        nAvail -= sizeof(quint64);
+        strm >> frameLen;
+        nAvail -= sizeof(quint8);
+        nAvail -= strm.readRawData(
+                    reinterpret_cast<char*>(frame),
+                    frameLen
+                    );
+        parsedMsgs.push_back(ModesData::fromRaw(frame, timestamp, frameLen));
+    }
+    return parsedMsgs.size();
+}
+
+bool
+DBChunk::flush(QByteArray &out)
 {
     QByteArray chunk;
     unsigned size = m_messages.size();
