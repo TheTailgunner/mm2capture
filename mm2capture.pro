@@ -78,7 +78,6 @@ SOURCES += src/main.cpp\
     src/db/db-exception.cpp \
     src/db/db-reader.cpp \
     src/db/db-writer.cpp \
-    src/db/db-chunk.cpp \
     src/network/feed-factory.cpp \
     src/recorder.cpp \
     src/player.cpp
@@ -96,7 +95,6 @@ HEADERS  += src/mainwindow.h \
     src/db/db-exception.h \
     src/db/db-reader.h \
     src/db/db-writer.h \
-    src/db/db-chunk.h \
     src/network/feed-factory.h \
     src/recorder.h \
     src/player.h \

@@ -54,13 +54,15 @@ Packer::decompress(const QByteArray &data)
     int ret = inflateInit(&zStream);
     if (ret != Z_OK)
         throw PackerException(ret);
+
     zStream.avail_in = compressedLen;
     zStream.next_in = reinterpret_cast<Bytef*>(pCompressed);
     do {
         zStream.avail_out = CHUNK_LEN_BYTES;
         zStream.next_out = chunk;
         ret = inflate(&zStream, Z_FINISH);
-        if (ret < 0)
+        if (ret != Z_BUF_ERROR &&
+                ret != Z_OK && ret != Z_STREAM_END)
             throw PackerException(ret);
         outData.append(reinterpret_cast<char*>(chunk),
                        CHUNK_LEN_BYTES - zStream.avail_out);

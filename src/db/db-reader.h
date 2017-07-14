@@ -5,11 +5,10 @@
 #include <QtSql>
 #include <QtGlobal>
 #include <QSharedPointer>
-#include "db-chunk.h"
+
+class QByteArray;
 
 namespace MM2Capture {
-
-class DBChunk;
 
 class DBReader {
 public:
@@ -24,7 +23,7 @@ public:
         return m_isOpen;
     }
     void tryUseSession(quint64);
-    bool getNextChunk(DBChunk &);
+    bool getNextChunk(QByteArray &);
     void close();
     QSqlQuery getAvailableSessions() const;
     ~DBReader() {

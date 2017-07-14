@@ -17,7 +17,8 @@ public:
     explicit OutputSessionDialog(QWidget *parent = 0);
     void useReader(const MM2Capture::DBReader &);
     quint64 selectedSessionId() const {
-        return m_selectedId;
+        // FIXME SQL (at least SQLite) primary keys started at 1
+        return m_selectedId + 1;
     }
     ~OutputSessionDialog();
 private slots:

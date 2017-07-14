@@ -1,26 +1,32 @@
-#ifndef _PLAYER_H_
-#define _PLAYER_H_
+#ifndef PLAYER_H_
+#define PLAYER_H_
 
 #include <QObject>
 #include "db/db-reader.h"
-#include <QSqlQueryModel>
+#include "modes/modes-data.h"
 
 namespace MM2Capture {
 
-class Player: public QObject {
+class Player: public QThread {
     Q_OBJECT
 public:
     Player(QObject *prnt = nullptr);
     void setReader(const DBReader::Ptr pr) {
         m_pDbReader = pr;
     }
-    void start();
-    void stop();
+signals:
+    void error(const QString &);
+protected:
+    void run() override;
+private slots:
+    void startWork();
+    void stopWork();
 private:
-    bool m_isRunning;
     DBReader::Ptr m_pDbReader;
+
+    void sendMessage(const ModesData &);
 };
 
 }
 
-#endif
+#endif // PLAYER_H

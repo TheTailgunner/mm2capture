@@ -164,9 +164,13 @@ MainWindow::slotPlayStart() {
     m_pDbReader->setFile(ui->outputFilenameEdit->text());
     try {
         m_pDbReader->open();
+
         OutputSessionDialog dialog;
         dialog.useReader(*m_pDbReader);
+
         if (dialog.exec() == QDialog::Accepted) {
+            m_pDbReader->tryUseSession(
+                        dialog.selectedSessionId() );
             m_pPlayer->setReader(m_pDbReader);
         }
     } catch (const std::runtime_error &exc) {
@@ -175,4 +179,5 @@ MainWindow::slotPlayStart() {
                               QMessageBox::Ok);
         return;
     }
+    m_pPlayer->start();
 }

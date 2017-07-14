@@ -150,7 +150,7 @@ DBWriter::flushChunk()
     if (m_msgsToFlush.size() == 0)
         return;
     QSqlQuery query("", QSqlDatabase::database(CONNECTION_NAME));
-    QString strQuery = "INSERT INTO chunks(sessionID, startTimestamp, chunkNumber, chunkData) VALUES("
+    QString strQuery = "INSERT INTO chunks(sessionId, startTimestamp, chunkNumber, chunkData) VALUES("
                     ":SID, :STS, :CN, :CD)";
     query.prepare(strQuery);
     query.bindValue(":SID", m_sessionId);
@@ -160,7 +160,6 @@ DBWriter::flushChunk()
     QByteArray serializedMessagesData;
     QDataStream strm(&serializedMessagesData, QIODevice::WriteOnly);
     strm.setVersion(QDataStream::Qt_4_0);
-
     strm << m_msgsToFlush;
 
     QByteArray deflatedData = Packer::compress(serializedMessagesData);

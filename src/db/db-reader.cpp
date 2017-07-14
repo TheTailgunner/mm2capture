@@ -44,11 +44,11 @@ DBReader::tryUseSession(quint64 sessionId)
     if (!m_isOpen || m_sessionSelected)
         return;
     QSqlQuery query("", m_dbHandler);
-    QString strQuery = "SELECT startTimestamp, chunkData FROM"
-                       "chunks WHERE sessionID = :SID"
-                       "ORDER by chunkNumber;";
+    QString strQuery = QString("SELECT chunkData FROM"
+                       " chunks WHERE sessionId = %1"
+                       " ORDER by chunkNumber;").arg(sessionId);
     query.prepare(strQuery);
-    query.bindValue(":SID", sessionId);
+    //query.bindValue(0, sessionId);
     if (!query.exec()) {
        QSqlError err = query.lastError();
        throw DBException(err);
@@ -59,10 +59,12 @@ DBReader::tryUseSession(quint64 sessionId)
 }
 
 bool
-DBReader::getNextChunk(DBChunk &outChunk) {
+DBReader::getNextChunk(QByteArray &outChunk) {
+    if (!m_sessionSelected)
+        throw std::runtime_error("DBReader::getNextChunk(): no session"
+                                 "selected");
     if (m_sessionData.next()) {
-        quint64 chunkTimestamp = m_sessionData.value(0).toLongLong();
-        QByteArray chunkData = m_sessionData.value(1).toByteArray();
+        outChunk = std::move(m_sessionData.value(0).toByteArray());
         return true;
     }
     return false;
