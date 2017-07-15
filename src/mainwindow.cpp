@@ -38,15 +38,20 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->inputPortEdit->setValidator(new QIntValidator(0, 1 << 16, this));
-    QObject::connect(ui->startRecordButton, SIGNAL(clicked(bool)), this, SLOT(slotRecordStart()));
-    QObject::connect(ui->stopRecordButton, SIGNAL(clicked(bool)), this, SLOT(slotRecordStop()));
-    QObject::connect(m_pRecorder, SIGNAL(started()), this, SLOT(slotRecorderStarted()));
+    QObject::connect(ui->startRecordButton, SIGNAL(clicked(bool)),
+                     this, SLOT(slotRecordStart()));
+    QObject::connect(ui->stopRecordButton, SIGNAL(clicked(bool)),
+                     this, SLOT(slotRecordStop()));
+    QObject::connect(m_pRecorder, SIGNAL(started()), this,
+                     SLOT(slotRecorderStarted()));
     /*QObject::connect(m_pRecorder, SIGNAL(networkStatsUpdated(FeedCounter)),
                      this, SLOT(slotUpdateRecordStats(FeedCounter)), Qt::DirectConnection);*/
-    QObject::connect(m_pRecorder, SIGNAL(error(QString)), this, SLOT(slotRecordError(QString)));
-    QObject::connect(m_pRecorder, SIGNAL(finished()), this, SLOT(slotRecorderFinished()));
+    QObject::connect(m_pRecorder, SIGNAL(error(QString)), this,
+                     SLOT(slotRecordError(QString)));
+    QObject::connect(m_pRecorder, SIGNAL(finished()), this,
+                     SLOT(slotRecorderFinished()));
     QObject::connect(ui->selectInputFileButton, SIGNAL(clicked(bool)), this,
-                     SLOT(slotSelectFile()));
+                     SLOT(slotSelectRecFile()));
 
     QObject::connect(ui->startPlayerButton, SIGNAL(clicked(bool)),
                      this, SLOT(slotPlayStart()));
@@ -58,6 +63,10 @@ MainWindow::MainWindow(QWidget *parent) :
                      this, SLOT(slotPlayError(QString)));
     QObject::connect(ui->stopPlayerButton, SIGNAL(clicked(bool)),
                      this, SLOT(slotPlayStop()));
+    QObject::connect(ui->selectOutputFileButton, SIGNAL(clicked(bool)), this,
+                     SLOT(slotSelectPlayerFile()));
+    QObject::connect(ui->playRateSpinBox, SIGNAL(valueChanged(double)),
+                     m_pPlayer, SLOT(setRate(double)), Qt::QueuedConnection);
 }
 
 MainWindow::~MainWindow()
@@ -137,12 +146,33 @@ void MainWindow::slotRecorderFinished()
 }
 
 void
-MainWindow::slotSelectFile() {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    "Save DB",
-                                                    "", "SQLite3 DB(*.db);");
-    if (!fileName.isEmpty())
-        ui->inputFilenameEdit->setText(fileName);
+MainWindow::slotSelectRecFile() {
+    QFileDialog dialog(nullptr, "Open DB to write");
+    //dialog.setFileMode(QFileDialog::AnyFile);
+    QStringList filters;
+    filters << "Any file (*)" << "SQLite3 DB (*.db)";
+    dialog.setNameFilters(filters);
+
+    int res = dialog.exec();
+
+    if (QFileDialog::Accepted == res) {
+        ui->inputFilenameEdit->setText(
+                    dialog.selectedFiles().at(0)
+                    );
+    }
+}
+
+void
+MainWindow::slotSelectPlayerFile() {
+    QFileDialog dialog;
+    QStringList filters;
+    filters << "SQLite3 databases (*.db)" <<
+               "Any files(*)";
+    dialog.setNameFilters(filters);
+    int res = dialog.exec();
+    QString fileName = dialog.selectedFiles().at(0);
+    if (QFileDialog::Accepted == res)
+        ui->outputFilenameEdit->setText(fileName);
 }
 
 void
@@ -185,6 +215,7 @@ MainWindow::slotPlayStart() {
             m_pDbReader->tryUseSession(
                         dialog.selectedSessionId() );
             m_pPlayer->setReader(m_pDbReader);
+            m_pPlayer->start();
         }
     } catch (const std::runtime_error &exc) {
         QMessageBox::critical(this, "Error",
@@ -192,7 +223,6 @@ MainWindow::slotPlayStart() {
                               QMessageBox::Ok);
         return;
     }
-    m_pPlayer->start();
 }
 
 void
@@ -203,17 +233,33 @@ MainWindow::slotPlayStop() {
 
 void
 MainWindow::slotPlayError(const QString &strDescr) {
-    QMessageBox::critical(0, "Recorder error",
+    QMessageBox::critical(0, "Player error",
                           strDescr,
                           QMessageBox::Ok);
 }
 
 void
 MainWindow::slotPlayStarted() {
+    ui->outputFilenameEdit->setEnabled(false);
+    ui->outputAddressEdit->setEnabled(false);
+    ui->outputPortEdit->setEnabled(false);
+    ui->selectOutputFileButton->setEnabled(false);
+    ui->startPlayerButton->setEnabled(false);
+    ui->stopPlayerButton->setEnabled(true);
 }
 
 void
 MainWindow::slotPlayFinished() {
+    ui->outputFilenameEdit->setEnabled(true);
+    ui->outputAddressEdit->setEnabled(true);
+    ui->outputPortEdit->setEnabled(true);
+    ui->selectOutputFileButton->setEnabled(true);
+    ui->startPlayerButton->setEnabled(true);
+    ui->stopPlayerButton->setEnabled(false);
+}
+
+void
+MainWindow::slotRecordPlayed() {
     QMessageBox::information(0, "Finished", "Record played",
                              QMessageBox::Ok);
 }

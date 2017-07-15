@@ -29,7 +29,7 @@ void __sleep_msecs(uint64_t ms) {
 
 using namespace MM2Capture;
 
-Player::Player(QObject *prnt): QThread(prnt)
+Player::Player(QObject *prnt): QThread(prnt), m_speedupRate{1.0}
 { }
 
 void
@@ -96,8 +96,9 @@ Player::run() {
 
             if (!pending) {
                 if (iMsg != msgsEnd - 1) {
-                    quint64 sleepTimeMsec = (iMsg + 1)->timestamp() -
-                            iMsg->timestamp();
+                    quint64 sleepTimeMsec = static_cast<quint64>(
+                                ( (iMsg + 1)->timestamp() - iMsg->timestamp() ) /
+                                m_speedupRate);
                     *m_pOutput << *iMsg;
                     __sleep_msecs(sleepTimeMsec);
                     ++iMsg;
@@ -107,15 +108,16 @@ Player::run() {
                     ++iMsg;
                 }
             } else {
-                quint64 sleepTimeMsec = iMsg->timestamp() - pendingSend.timestamp();
+                quint64 sleepTimeMsec = static_cast<quint64>(
+                            (iMsg->timestamp() - pendingSend.timestamp()) / m_speedupRate
+                            );
                 pending = false;
                 *m_pOutput << pendingSend;
                 if (sleepTimeMsec)
                     __sleep_msecs(sleepTimeMsec);
             }
         }
-
-        qDebug() << "chunk send";
     }
     stopWork();
+    emit recordEnd();
 }

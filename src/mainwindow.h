@@ -27,9 +27,10 @@ public:
 signals:
     void started();
     void stopped();
-public slots:
-    void slotSelectFile();
 private slots:
+    void slotSelectRecFile();
+    void slotSelectPlayerFile();
+
     void slotRecordStart();
     void slotRecordStop();
     void slotUpdateRecordStats(const FeedCounter &);
@@ -42,6 +43,7 @@ private slots:
     void slotPlayError(const QString &);
     void slotPlayStarted();
     void slotPlayFinished();
+    void slotRecordPlayed();
 private:
     Ui::MainWindow *ui;
     MM2Capture::Recorder* m_pRecorder;

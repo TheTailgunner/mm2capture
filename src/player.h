@@ -20,6 +20,10 @@ public:
     void setOutput(const AbstractOutputFeed::Ptr pf) {
         m_pOutput = pf;
     }
+public slots:
+    void setRate(double rate) {
+        m_speedupRate = rate;
+    }
 
 signals:
     void error(const QString &);
@@ -32,6 +36,7 @@ private slots:
 private:
     DBReader::Ptr m_pDbReader;
     AbstractOutputFeed::Ptr m_pOutput;
+    double m_speedupRate;
 
     void sendMessage(const ModesData &);
 };
