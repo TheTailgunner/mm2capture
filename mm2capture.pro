@@ -70,6 +70,7 @@ SOURCES += src/main.cpp\
     src/network/abstract-feed.cpp \
     src/network/feed-counter.cpp \
     src/network/tcp-input-feed.cpp \
+    src/network/tcp-output-feed.cpp \
     src/network/io-impl/abstract-io.cpp \
     src/network/io-impl/tcp-client.cpp \
     src/modes/modes-decoder.cpp \
@@ -87,6 +88,7 @@ HEADERS  += src/mainwindow.h \
     src/network/abstract-feed.h \
     src/network/feed-counter.h \
     src/network/tcp-input-feed.h \
+    src/network/tcp-output-feed.h \
     src/network/io-impl/abstract-io.h \
     src/network/io-impl/tcp-client.h \
     src/modes/modes-decoder.h \

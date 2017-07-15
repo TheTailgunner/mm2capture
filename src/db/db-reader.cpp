@@ -46,9 +46,8 @@ DBReader::tryUseSession(quint64 sessionId)
     QSqlQuery query("", m_dbHandler);
     QString strQuery = QString("SELECT chunkData FROM"
                        " chunks WHERE sessionId = %1"
-                       " ORDER by chunkNumber;").arg(sessionId);
+                       " ORDER BY chunkNumber;").arg(sessionId);
     query.prepare(strQuery);
-    //query.bindValue(0, sessionId);
     if (!query.exec()) {
        QSqlError err = query.lastError();
        throw DBException(err);

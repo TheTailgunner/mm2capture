@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "network/tcp-input-feed.h"
+#include "network/tcp-output-feed.h"
 #include "outputsessiondialog.h"
 
 #include <QMessageBox>
@@ -49,6 +50,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(ui->startPlayerButton, SIGNAL(clicked(bool)),
                      this, SLOT(slotPlayStart()));
+    QObject::connect(m_pPlayer, SIGNAL(started()),
+                     this, SLOT(slotPlayStarted()));
+    QObject::connect(m_pPlayer, SIGNAL(finished()),
+                     this, SLOT(slotPlayFinished()));
+    QObject::connect(m_pPlayer, SIGNAL(error(QString)),
+                     this, SLOT(slotPlayError(QString)));
+    QObject::connect(ui->stopPlayerButton, SIGNAL(clicked(bool)),
+                     this, SLOT(slotPlayStop()));
 }
 
 MainWindow::~MainWindow()
@@ -82,7 +91,7 @@ MainWindow::slotRecordStart()
 void
 MainWindow::slotRecordStop() {
     m_pRecorder->requestInterruption();
-    m_pRecorder->wait();;
+    m_pRecorder->wait();
 }
 
 void
@@ -102,7 +111,6 @@ void MainWindow::slotRecordError(const QString &strDescr)
     QMessageBox::critical(0, "Recorder error",
                           strDescr,
                           QMessageBox::Ok);
-    qDebug() << strDescr;
 }
 
 void
@@ -129,11 +137,6 @@ void MainWindow::slotRecorderFinished()
 }
 
 void
-MainWindow::slotSelectPlayerSession()
-{
-}
-
-void
 MainWindow::slotSelectFile() {
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     "Save DB",
@@ -157,11 +160,21 @@ MainWindow::slotPlayStart() {
                               QMessageBox::Ok);
         return;
     }
+
     if (!m_pDbReader) {
         m_pDbReader = DBReader::Ptr(new DBReader());
     }
-
     m_pDbReader->setFile(ui->outputFilenameEdit->text());
+
+    AbstractOutputFeed::Ptr pOutput(
+                new TcpClientOutputFeed(
+                    ui->outputAddressEdit->text(),
+                    ui->outputPortEdit->text().toInt()
+                    )
+                );
+    pOutput->setOutputType(ModesData::MessageType::Beast);
+    m_pPlayer->setOutput(pOutput);
+
     try {
         m_pDbReader->open();
 
@@ -180,4 +193,27 @@ MainWindow::slotPlayStart() {
         return;
     }
     m_pPlayer->start();
+}
+
+void
+MainWindow::slotPlayStop() {
+    m_pPlayer->requestInterruption();
+    m_pPlayer->wait();
+}
+
+void
+MainWindow::slotPlayError(const QString &strDescr) {
+    QMessageBox::critical(0, "Recorder error",
+                          strDescr,
+                          QMessageBox::Ok);
+}
+
+void
+MainWindow::slotPlayStarted() {
+}
+
+void
+MainWindow::slotPlayFinished() {
+    QMessageBox::information(0, "Finished", "Record played",
+                             QMessageBox::Ok);
 }

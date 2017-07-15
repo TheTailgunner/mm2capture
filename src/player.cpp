@@ -17,9 +17,11 @@
 #ifdef __linux
 
 void __sleep_msecs(uint64_t ms) {
-    struct timespec tm;
-    tm.tv_sec = ms / 1000;
-    tm.tv_nsec = (ms % 1000) * 1000;
+    struct timespec tm =
+     {
+       static_cast<time_t>(ms / 1000),
+       static_cast<long>((ms % 1000) * 1000000L)
+     };
     nanosleep(&tm, NULL);
 }
 
@@ -35,11 +37,13 @@ Player::startWork() {
     if (!m_pDbReader)
         throw std::runtime_error("No DBReader provided");
     m_pDbReader->open();
+    m_pOutput->start();
 }
 
 void
 Player::stopWork() {
     m_pDbReader->close();
+    m_pOutput->stop();
 }
 
 void
@@ -82,42 +86,36 @@ Player::run() {
 
         QVector<ModesData>::iterator iMsg = msgs.begin();
         QVector<ModesData>::iterator msgsEnd = msgs.end();
-        quint64 sleepTimeMsec = 0;
 
         while (iMsg != msgsEnd) {
+
             if (isInterruptionRequested()) {
                 needQuit = true;
                 break;
             }
 
             if (!pending) {
-                if (std::distance(iMsg, msgsEnd) >= 1) {
-                    sleepTimeMsec = (iMsg + 1)->timestamp() -
+                if (iMsg != msgsEnd - 1) {
+                    quint64 sleepTimeMsec = (iMsg + 1)->timestamp() -
                             iMsg->timestamp();
+                    *m_pOutput << *iMsg;
+                    __sleep_msecs(sleepTimeMsec);
+                    ++iMsg;
                 } else {
                     pendingSend = *iMsg;
                     pending = true;
+                    ++iMsg;
                 }
-                sendMessage(*iMsg);
+            } else {
+                quint64 sleepTimeMsec = iMsg->timestamp() - pendingSend.timestamp();
+                pending = false;
+                *m_pOutput << pendingSend;
                 if (sleepTimeMsec)
                     __sleep_msecs(sleepTimeMsec);
-                ++iMsg;
-            } else {
-                pending = false;
-                sendMessage(pendingSend);
-                if (sleepTimeMsec)
-                    __sleep_msecs(iMsg->timestamp() -
-                                  pendingSend.timestamp());
             }
         }
+
+        qDebug() << "chunk send";
     }
     stopWork();
-}
-
-void
-Player::sendMessage(const ModesData &msg) {
-    QByteArray frame = msg.getMessage(ModesData::MessageType::Beast);
-    if (frame.length()) {
-        qDebug() << frame.toHex().toUpper();
-    }
 }

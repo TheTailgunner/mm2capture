@@ -37,8 +37,11 @@ private slots:
     void slotRecorderStarted();
     void slotRecorderFinished();
 
-    void slotSelectPlayerSession();
     void slotPlayStart();
+    void slotPlayStop();
+    void slotPlayError(const QString &);
+    void slotPlayStarted();
+    void slotPlayFinished();
 private:
     Ui::MainWindow *ui;
     MM2Capture::Recorder* m_pRecorder;

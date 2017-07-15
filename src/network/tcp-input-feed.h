@@ -12,24 +12,27 @@ namespace MM2Capture {
 class TcpClientInputFeed: public AbstractInputFeed,
         protected TcpClientImpl {
 public:
-    using AbstractInputFeed::start;
-
     TcpClientInputFeed();
     TcpClientInputFeed(const QString &strHost,
                        quint16 nPort);
+    ~TcpClientInputFeed();
+
     void start() override;
+    void stop() override;
+
     operator bool() const {
         return m_dataRead;
     }
+
     void setHost(const QString &strHost) {
         TcpClientImpl::setHost(strHost);
     }
+
     void setPort(quint16 nPort) {
         TcpClientImpl::setPort(nPort);
     }
-    AbstractInputFeed &operator >>(QVector<ModesData> &out);
-    void stop() override;
-    ~TcpClientInputFeed();
+
+    AbstractInputFeed &operator >>(QVector<ModesData> &out) override;
 private:
     bool m_isRunning;
     bool m_dataRead;
