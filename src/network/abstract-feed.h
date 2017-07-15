@@ -49,5 +49,29 @@ protected:
     FeedCounter m_stats;
 };
 
+class AbstractOutputFeed {
+public:
+    using Ptr = QSharedPointer<AbstractOutputFeed>;
+
+    AbstractOutputFeed();
+    virtual ~AbstractOutputFeed() {}
+
+    virtual void start() = 0;
+    virtual void stop() = 0;
+
+    void setOutputType(ModesData::MessageType t) {
+        m_outputType = t;
+    }
+
+    const FeedCounter &stats() const {
+        return m_stats;
+    }
+
+    virtual AbstractOutputFeed &operator <<(const ModesData &) = 0;
+protected:
+    FeedCounter m_stats;
+    ModesData::MessageType m_outputType;
+};
+
 }
 #endif
