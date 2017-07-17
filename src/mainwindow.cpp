@@ -3,6 +3,7 @@
 #include "network/tcp-input-feed.h"
 #include "network/tcp-output-feed.h"
 #include "outputsessiondialog.h"
+#include "db/db-session-stats.h"
 
 #include <QMessageBox>
 #include <QThread>
@@ -212,8 +213,10 @@ MainWindow::slotPlayStart() {
         dialog.useReader(*m_pDbReader);
 
         if (dialog.exec() == QDialog::Accepted) {
+            DBSessionStats sessionInfo;
             m_pDbReader->tryUseSession(
-                        dialog.selectedSessionId() );
+                        dialog.selectedSessionId(), sessionInfo
+                        );
             m_pPlayer->setReader(m_pDbReader);
             m_pPlayer->start();
         }

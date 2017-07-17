@@ -4,6 +4,7 @@
 
 #include <QFile>
 #include <QByteArray>
+#include <QDateTime>
 
 using namespace MM2Capture;
 
@@ -39,7 +40,7 @@ DBReader::open() {
 }
 
 void
-DBReader::tryUseSession(quint64 sessionId)
+DBReader::tryUseSession(quint64 sessionId, DBSessionStats &outSessionInfo)
 {
     if (!m_isOpen || m_sessionSelected)
         return;
@@ -52,6 +53,7 @@ DBReader::tryUseSession(quint64 sessionId)
        QSqlError err = query.lastError();
        throw DBException(err);
     }
+    loadSessionStats(sessionId, outSessionInfo);
     m_sessionData = query;
     m_sessionSelected = true;
     m_sessionId = sessionId;
@@ -91,4 +93,31 @@ DBReader::getAvailableSessions() const
     if (query.lastError().type() != QSqlError::NoError)
         throw DBException(query.lastError());
     return query;
+}
+
+void
+DBReader::loadSessionStats(quint64 sessionId, DBSessionStats &outStats)
+{
+    const static QString FORMAT_STR = "yyyy-MM-dd HH:mm:ss";
+
+    QSqlQuery query("", m_dbHandler);
+    QString strQuery = QString("SELECT startTimestamp, endTimestamp"
+                               " FROM input_sessions"
+                               " WHERE id = :SID");
+    query.prepare(strQuery);
+    query.bindValue(":SID", sessionId);
+    query.exec();
+    if (query.lastError().type() != QSqlError::NoError)
+        throw DBException(query.lastError());
+    query.first();
+    quint64 startTimestamp = QDateTime::fromString(
+                query.value(0).toString(), FORMAT_STR
+                ).toMSecsSinceEpoch();
+    QVariant endTimestampValue = query.value(1);
+    if (endTimestampValue.isNull())
+        throw std::runtime_error("Incomplete session selected.");
+    quint64 endTimestamp = QDateTime::fromString(
+                endTimestampValue.toString(), FORMAT_STR
+                ).toMSecsSinceEpoch();
+    outStats.m_durationMsecs = endTimestamp - startTimestamp;
 }

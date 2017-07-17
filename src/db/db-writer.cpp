@@ -161,9 +161,9 @@ DBWriter::flushChunk()
     QDataStream strm(&serializedMessagesData, QIODevice::WriteOnly);
     strm.setVersion(QDataStream::Qt_4_0);
     strm << m_msgsToFlush;
+    m_msgsToFlush.clear();
 
     QByteArray deflatedData = Packer::compress(serializedMessagesData);
-    m_msgsToFlush.clear();
     query.bindValue(":CD", deflatedData);
 
     query.exec();

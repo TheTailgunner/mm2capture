@@ -5,6 +5,7 @@
 #include <QtSql>
 #include <QtGlobal>
 #include <QSharedPointer>
+#include "db-session-stats.h"
 
 class QByteArray;
 
@@ -22,7 +23,7 @@ public:
     bool isOpen() const {
         return m_isOpen;
     }
-    void tryUseSession(quint64);
+    void tryUseSession(quint64, DBSessionStats &);
     bool getNextChunk(QByteArray &);
     void close();
     QSqlQuery getAvailableSessions() const;
@@ -31,6 +32,9 @@ public:
     }
 private:
     static const QString CONNECTION_NAME;
+
+    void loadSessionStats(quint64 , DBSessionStats &);
+
     bool m_isOpen;
 
     bool m_sessionSelected;
