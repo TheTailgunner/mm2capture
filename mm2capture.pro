@@ -65,7 +65,7 @@ QMAKE_EXTRA_TARGETS += first copydata
 message("Normal build")
 TARGET = mm2capture
 SOURCES += src/main.cpp\
-        src/mainwindow.cpp \
+        src/gui/mainwindow.cpp \
         src/outputsessiondialog.cpp \
     src/network/abstract-feed.cpp \
     src/network/feed-counter.cpp \
@@ -84,7 +84,7 @@ SOURCES += src/main.cpp\
     src/recorder.cpp \
     src/player.cpp
 
-HEADERS  += src/mainwindow.h \
+HEADERS  += src/gui/mainwindow.h \
     src/outputsessiondialog.h \
     src/network/abstract-feed.h \
     src/network/feed-counter.h \
@@ -103,8 +103,8 @@ HEADERS  += src/mainwindow.h \
     src/recorder.h \
     src/player.h \
 
-FORMS    += mainwindow.ui \
-    outputsessiondialog.ui
+FORMS    += forms/mainwindow.ui \
+    forms/outputsessiondialog.ui
 }
 
 
