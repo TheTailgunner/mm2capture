@@ -1,4 +1,4 @@
-#include "src/network/feed-factory.h"
+#include "network/feed-factory.h"
 
 #include <QSharedPointer>
 #include "tcp-input-feed.h"

@@ -3,15 +3,15 @@
 #include <QObject>
 #include <QtTest/QtTest>
 
-#include "../src/modes/modes-decoder.h"
-#include "../src/modes/modes-data.h"
+#include <modes/modes-decoder.h>
+#include <modes/modes-data.h>
 
-class DecoderTest: public QObject {
-    Q_OBJECT
+class DecoderTest : public QObject {
+  Q_OBJECT
 private:
-    MM2Capture::ModesDecoder m_decoder;
+  MM2Capture::ModesDecoder m_decoder;
 private slots:
-    void testBeast();
+  void testBeast();
 };
 
 #endif

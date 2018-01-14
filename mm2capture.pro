@@ -26,7 +26,8 @@ win32:CONFIG(release, debug|release): LIBS += -L$$PWD/zlib/release/ -lz
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/zlib/debug/ -lz
 else:unix:!macx: LIBS += -L$$PWD/zlib/ -lz
 
-INCLUDEPATH += $$PWD/zlib/include
+INCLUDEPATH += $$PWD/zlib/include \
+               $$PWD/src/
 DEPENDPATH += $$PWD/zlib/include
 #QMAKE_LINK = clang++
 #QMAKE_LFLAGS = -fsanitize=address

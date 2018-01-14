@@ -8,28 +8,21 @@ namespace MM2Capture {
 
 class ModesData;
 
-class TcpClientOutputFeed: public AbstractOutputFeed,
-        protected TcpClientImpl {
+class TcpClientOutputFeed : public AbstractOutputFeed, protected TcpClientImpl {
 public:
-    TcpClientOutputFeed() = default;
-    TcpClientOutputFeed(const QString &,
-                        quint16);
-    ~TcpClientOutputFeed();
+  TcpClientOutputFeed() = default;
+  TcpClientOutputFeed(const QString &, quint16);
+  ~TcpClientOutputFeed();
 
-    void start() override;
-    void stop() override;
+  void start() override;
+  void stop() override;
 
-    void setHost(const QString &strHost) {
-        TcpClientImpl::setHost(strHost);
-    }
+  void setHost(const QString &strHost) { TcpClientImpl::setHost(strHost); }
 
-    void setPort(quint16 nPort) {
-        TcpClientImpl::setPort(nPort);
-    }
+  void setPort(quint16 nPort) { TcpClientImpl::setPort(nPort); }
 
-    AbstractOutputFeed &operator <<(const ModesData &) override;
+  AbstractOutputFeed &operator<<(const ModesData &) override;
 };
-
 }
 
 #endif

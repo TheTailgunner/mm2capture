@@ -3,12 +3,12 @@
 #include <QObject>
 #include <QtTest/QtTest>
 
-#include "../src/compress/packer.h"
+#include <compress/packer.h>
 
-class PackerTest: public QObject {
-    Q_OBJECT
+class PackerTest : public QObject {
+  Q_OBJECT
 private slots:
-    void testPacker();
+  void testPacker();
 };
 
 #endif
